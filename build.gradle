@@ -73,6 +73,17 @@ buildscript {
     }
 }
 
+dependencies {
+    runtimeOnly "org.apache.logging.log4j:log4j-core:${versions.log4j}"
+    compileOnly "com.fasterxml.jackson.core:jackson-annotations:${versions.jackson}"
+    compileOnly "com.fasterxml.jackson.core:jackson-databind:${versions.jackson_databind}"
+    compileOnly "org.apache.httpcomponents:httpcore:${versions.httpcore}"
+    compileOnly "org.apache.httpcomponents:httpclient:${versions.httpclient}"
+    compileOnly "commons-logging:commons-logging:${versions.commonslogging}"
+    implementation "com.google.code.gson:gson:2.11.0"
+    yamlRestTestImplementation "org.apache.logging.log4j:log4j-core:${versions.log4j}"
+}
+
 repositories {
     mavenLocal()
     maven { url "https://aws.oss.sonatype.org/content/repositories/snapshots" }
