@@ -7,6 +7,13 @@
  */
 package org.opensearch.searchrelevance.rest;
 
+import static org.opensearch.searchrelevance.plugin.Constants.JUDGMENTS_INDEX_NAME;
+import static org.opensearch.searchrelevance.plugin.Constants.QUERY_PLACEHOLDER;
+
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.opensearch.action.admin.indices.create.CreateIndexRequest;
@@ -27,13 +34,6 @@ import org.opensearch.searchrelevance.plugin.samplers.ProbabilityProportionalToS
 import org.opensearch.searchrelevance.plugin.samplers.ProbabilityProportionalToSizeParameters;
 import org.opensearch.transport.client.node.NodeClient;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.List;
-
-import static org.opensearch.searchrelevance.plugin.Constants.JUDGMENTS_INDEX_NAME;
-import static org.opensearch.searchrelevance.plugin.Constants.QUERY_PLACEHOLDER;
-
 public class SearchRelevanceRestHandler extends BaseRestHandler {
 
     private static final Logger LOGGER = LogManager.getLogger(SearchRelevanceRestHandler.class);
@@ -50,16 +50,17 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
     @Override
     public List<Route> routes() {
         return List.of(
-                new Route(RestRequest.Method.POST, IMPLICIT_JUDGMENTS_URL),
-                new Route(RestRequest.Method.POST, QUERYSET_MANAGEMENT_URL),
-                new Route(RestRequest.Method.POST, QUERYSET_RUN_URL));
+            new Route(RestRequest.Method.POST, IMPLICIT_JUDGMENTS_URL),
+            new Route(RestRequest.Method.POST, QUERYSET_MANAGEMENT_URL),
+            new Route(RestRequest.Method.POST, QUERYSET_RUN_URL)
+        );
     }
 
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
 
         // Handle managing query sets.
-        if(QUERYSET_MANAGEMENT_URL.equalsIgnoreCase(request.path())) {
+        if (QUERYSET_MANAGEMENT_URL.equalsIgnoreCase(request.path())) {
 
             // Creating a new query set by sampling the UBI queries.
             if (request.method().equals(RestRequest.Method.POST)) {
@@ -77,50 +78,74 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
 
                     try {
 
-                        final AllQueriesQuerySamplerParameters parameters = new AllQueriesQuerySamplerParameters(name, description, sampling, querySetSize);
+                        final AllQueriesQuerySamplerParameters parameters = new AllQueriesQuerySamplerParameters(
+                            name,
+                            description,
+                            sampling,
+                            querySetSize
+                        );
                         final AllQueriesQuerySampler sampler = new AllQueriesQuerySampler(client, parameters);
 
                         // Sample and index the queries.
                         final String querySetId = sampler.sample();
 
-                        return restChannel -> restChannel.sendResponse(new BytesRestResponse(RestStatus.OK, "{\"query_set\": \"" + querySetId + "\"}"));
+                        return restChannel -> restChannel.sendResponse(
+                            new BytesRestResponse(RestStatus.OK, "{\"query_set\": \"" + querySetId + "\"}")
+                        );
 
-                    } catch(Exception ex) {
-                        return restChannel -> restChannel.sendResponse(new BytesRestResponse(RestStatus.INTERNAL_SERVER_ERROR, "{\"error\": \"" + ex.getMessage() + "\"}"));
+                    } catch (Exception ex) {
+                        return restChannel -> restChannel.sendResponse(
+                            new BytesRestResponse(RestStatus.INTERNAL_SERVER_ERROR, "{\"error\": \"" + ex.getMessage() + "\"}")
+                        );
                     }
-
 
                     // Create a query set by using PPTSS sampling.
                 } else if (ProbabilityProportionalToSizeAbstractQuerySampler.NAME.equalsIgnoreCase(sampling)) {
 
                     LOGGER.info("Creating query set using PPTSS");
 
-                    final ProbabilityProportionalToSizeParameters parameters = new ProbabilityProportionalToSizeParameters(name, description, sampling, querySetSize);
-                    final ProbabilityProportionalToSizeAbstractQuerySampler sampler = new ProbabilityProportionalToSizeAbstractQuerySampler(client, parameters);
+                    final ProbabilityProportionalToSizeParameters parameters = new ProbabilityProportionalToSizeParameters(
+                        name,
+                        description,
+                        sampling,
+                        querySetSize
+                    );
+                    final ProbabilityProportionalToSizeAbstractQuerySampler sampler = new ProbabilityProportionalToSizeAbstractQuerySampler(
+                        client,
+                        parameters
+                    );
 
                     try {
 
                         // Sample and index the queries.
                         final String querySetId = sampler.sample();
 
-                        return restChannel -> restChannel.sendResponse(new BytesRestResponse(RestStatus.OK, "{\"query_set\": \"" + querySetId + "\"}"));
+                        return restChannel -> restChannel.sendResponse(
+                            new BytesRestResponse(RestStatus.OK, "{\"query_set\": \"" + querySetId + "\"}")
+                        );
 
-                    } catch(Exception ex) {
-                        return restChannel -> restChannel.sendResponse(new BytesRestResponse(RestStatus.INTERNAL_SERVER_ERROR, "{\"error\": \"" + ex.getMessage() + "\"}"));
+                    } catch (Exception ex) {
+                        return restChannel -> restChannel.sendResponse(
+                            new BytesRestResponse(RestStatus.INTERNAL_SERVER_ERROR, "{\"error\": \"" + ex.getMessage() + "\"}")
+                        );
                     }
 
                 } else {
                     // An Invalid sampling method was provided in the request.
-                    return restChannel -> restChannel.sendResponse(new BytesRestResponse(RestStatus.BAD_REQUEST, "{\"error\": \"Invalid sampling method: " + sampling + "\"}"));
+                    return restChannel -> restChannel.sendResponse(
+                        new BytesRestResponse(RestStatus.BAD_REQUEST, "{\"error\": \"Invalid sampling method: " + sampling + "\"}")
+                    );
                 }
 
             } else {
                 // Invalid HTTP method for this endpoint.
-                return restChannel -> restChannel.sendResponse(new BytesRestResponse(RestStatus.METHOD_NOT_ALLOWED, "{\"error\": \"" + request.method() + " is not allowed.\"}"));
+                return restChannel -> restChannel.sendResponse(
+                    new BytesRestResponse(RestStatus.METHOD_NOT_ALLOWED, "{\"error\": \"" + request.method() + " is not allowed.\"}")
+                );
             }
 
             // Handle running query sets.
-        } else if(QUERYSET_RUN_URL.equalsIgnoreCase(request.path())) {
+        } else if (QUERYSET_RUN_URL.equalsIgnoreCase(request.path())) {
 
             final String querySetId = request.param("id");
             final String judgmentsId = request.param("judgments_id");
@@ -130,30 +155,52 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
             final int k = Integer.parseInt(request.param("k", "10"));
             final double threshold = Double.parseDouble(request.param("threshold", "1.0"));
 
-            if(querySetId == null || querySetId.isEmpty() || judgmentsId == null || judgmentsId.isEmpty() || index == null || index.isEmpty()) {
-                return restChannel -> restChannel.sendResponse(new BytesRestResponse(RestStatus.BAD_REQUEST, "{\"error\": \"Missing required parameters.\"}"));
+            if (querySetId == null
+                || querySetId.isEmpty()
+                || judgmentsId == null
+                || judgmentsId.isEmpty()
+                || index == null
+                || index.isEmpty()) {
+                return restChannel -> restChannel.sendResponse(
+                    new BytesRestResponse(RestStatus.BAD_REQUEST, "{\"error\": \"Missing required parameters.\"}")
+                );
             }
 
-            if(k < 1) {
-                return restChannel -> restChannel.sendResponse(new BytesRestResponse(RestStatus.BAD_REQUEST, "{\"error\": \"k must be a positive integer.\"}"));
+            if (k < 1) {
+                return restChannel -> restChannel.sendResponse(
+                    new BytesRestResponse(RestStatus.BAD_REQUEST, "{\"error\": \"k must be a positive integer.\"}")
+                );
             }
 
-            if(!request.hasContent()) {
-                return restChannel -> restChannel.sendResponse(new BytesRestResponse(RestStatus.BAD_REQUEST, "{\"error\": \"Missing query in body.\"}"));
+            if (!request.hasContent()) {
+                return restChannel -> restChannel.sendResponse(
+                    new BytesRestResponse(RestStatus.BAD_REQUEST, "{\"error\": \"Missing query in body.\"}")
+                );
             }
 
             // Get the query JSON from the content.
             final String query = new String(BytesReference.toBytes(request.content()), Charset.defaultCharset());
 
             // Validate the query has a QUERY_PLACEHOLDER.
-            if(!query.contains(QUERY_PLACEHOLDER)) {
-                return restChannel -> restChannel.sendResponse(new BytesRestResponse(RestStatus.BAD_REQUEST, "{\"error\": \"Missing query placeholder in query.\"}"));
+            if (!query.contains(QUERY_PLACEHOLDER)) {
+                return restChannel -> restChannel.sendResponse(
+                    new BytesRestResponse(RestStatus.BAD_REQUEST, "{\"error\": \"Missing query placeholder in query.\"}")
+                );
             }
 
             try {
 
                 final OpenSearchQuerySetRunner openSearchQuerySetRunner = new OpenSearchQuerySetRunner(client);
-                final QuerySetRunResult querySetRunResult = openSearchQuerySetRunner.run(querySetId, judgmentsId, index, searchPipeline, idField, query, k, threshold);
+                final QuerySetRunResult querySetRunResult = openSearchQuerySetRunner.run(
+                    querySetId,
+                    judgmentsId,
+                    index,
+                    searchPipeline,
+                    idField,
+                    query,
+                    k,
+                    threshold
+                );
                 openSearchQuerySetRunner.save(querySetRunResult);
 
             } catch (Exception ex) {
@@ -161,14 +208,16 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                 return restChannel -> restChannel.sendResponse(new BytesRestResponse(RestStatus.INTERNAL_SERVER_ERROR, ex.getMessage()));
             }
 
-            return restChannel -> restChannel.sendResponse(new BytesRestResponse(RestStatus.OK, "{\"message\": \"Run initiated for query set " + querySetId + "\"}"));
+            return restChannel -> restChannel.sendResponse(
+                new BytesRestResponse(RestStatus.OK, "{\"message\": \"Run initiated for query set " + querySetId + "\"}")
+            );
 
             // Handle the on-demand creation of implicit judgments.
-        } else if(IMPLICIT_JUDGMENTS_URL.equalsIgnoreCase(request.path())) {
+        } else if (IMPLICIT_JUDGMENTS_URL.equalsIgnoreCase(request.path())) {
 
             if (request.method().equals(RestRequest.Method.POST)) {
 
-                //final long startTime = System.currentTimeMillis();
+                // final long startTime = System.currentTimeMillis();
                 final String clickModel = request.param("click_model", "coec");
                 final int maxRank = Integer.parseInt(request.param("max_rank", "20"));
 
@@ -188,59 +237,72 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                         judgmentsId = coecClickModel.calculateJudgments();
 
                         // judgmentsId will be null if no judgments were created (and indexed).
-                        if(judgmentsId == null) {
+                        if (judgmentsId == null) {
                             // TODO: Is Bad Request the appropriate error? Perhaps Conflict is more appropriate?
-                            return restChannel -> restChannel.sendResponse(new BytesRestResponse(RestStatus.BAD_REQUEST, "{\"error\": \"No judgments were created. Check the queries and events data.\"}"));
+                            return restChannel -> restChannel.sendResponse(
+                                new BytesRestResponse(
+                                    RestStatus.BAD_REQUEST,
+                                    "{\"error\": \"No judgments were created. Check the queries and events data.\"}"
+                                )
+                            );
                         }
 
-//                        final long elapsedTime = System.currentTimeMillis() - startTime;
-//
-//                        final Map<String, Object> job = new HashMap<>();
-//                        job.put("name", "manual_generation");
-//                        job.put("click_model", clickModel);
-//                        job.put("started", startTime);
-//                        job.put("duration", elapsedTime);
-//                        job.put("invocation", "on_demand");
-//                        job.put("judgments_id", judgmentsId);
-//                        job.put("max_rank", maxRank);
-//
-//                        final String jobId = UUID.randomUUID().toString();
-//
-//                        final IndexRequest indexRequest = new IndexRequest()
-//                                .index(SearchQualityEvaluationPlugin.COMPLETED_JOBS_INDEX_NAME)
-//                                .id(jobId)
-//                                .source(job)
-//                                .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
-//
-//                        client.index(indexRequest, new ActionListener<>() {
-//                            @Override
-//                            public void onResponse(final IndexResponse indexResponse) {
-//                                LOGGER.debug("Click model job completed successfully: {}", jobId);
-//                            }
-//
-//                            @Override
-//                            public void onFailure(final Exception ex) {
-//                                LOGGER.error("Unable to run job with ID {}", jobId, ex);
-//                                throw new RuntimeException("Unable to run job", ex);
-//                            }
-//                        });
+                        // final long elapsedTime = System.currentTimeMillis() - startTime;
+                        //
+                        // final Map<String, Object> job = new HashMap<>();
+                        // job.put("name", "manual_generation");
+                        // job.put("click_model", clickModel);
+                        // job.put("started", startTime);
+                        // job.put("duration", elapsedTime);
+                        // job.put("invocation", "on_demand");
+                        // job.put("judgments_id", judgmentsId);
+                        // job.put("max_rank", maxRank);
+                        //
+                        // final String jobId = UUID.randomUUID().toString();
+                        //
+                        // final IndexRequest indexRequest = new IndexRequest()
+                        // .index(SearchQualityEvaluationPlugin.COMPLETED_JOBS_INDEX_NAME)
+                        // .id(jobId)
+                        // .source(job)
+                        // .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
+                        //
+                        // client.index(indexRequest, new ActionListener<>() {
+                        // @Override
+                        // public void onResponse(final IndexResponse indexResponse) {
+                        // LOGGER.debug("Click model job completed successfully: {}", jobId);
+                        // }
+                        //
+                        // @Override
+                        // public void onFailure(final Exception ex) {
+                        // LOGGER.error("Unable to run job with ID {}", jobId, ex);
+                        // throw new RuntimeException("Unable to run job", ex);
+                        // }
+                        // });
 
                     } catch (Exception ex) {
                         throw new RuntimeException("Unable to generate judgments.", ex);
                     }
 
-                    return restChannel -> restChannel.sendResponse(new BytesRestResponse(RestStatus.OK, "{\"judgments_id\": \"" + judgmentsId + "\"}"));
+                    return restChannel -> restChannel.sendResponse(
+                        new BytesRestResponse(RestStatus.OK, "{\"judgments_id\": \"" + judgmentsId + "\"}")
+                    );
 
                 } else {
-                    return restChannel -> restChannel.sendResponse(new BytesRestResponse(RestStatus.BAD_REQUEST, "{\"error\": \"Invalid click model.\"}"));
+                    return restChannel -> restChannel.sendResponse(
+                        new BytesRestResponse(RestStatus.BAD_REQUEST, "{\"error\": \"Invalid click model.\"}")
+                    );
                 }
 
             } else {
-                return restChannel -> restChannel.sendResponse(new BytesRestResponse(RestStatus.METHOD_NOT_ALLOWED, "{\"error\": \"" + request.method() + " is not allowed.\"}"));
+                return restChannel -> restChannel.sendResponse(
+                    new BytesRestResponse(RestStatus.METHOD_NOT_ALLOWED, "{\"error\": \"" + request.method() + " is not allowed.\"}")
+                );
             }
 
         } else {
-            return restChannel -> restChannel.sendResponse(new BytesRestResponse(RestStatus.NOT_FOUND, "{\"error\": \"" + request.path() + " was not found.\"}"));
+            return restChannel -> restChannel.sendResponse(
+                new BytesRestResponse(RestStatus.NOT_FOUND, "{\"error\": \"" + request.path() + " was not found.\"}")
+            );
         }
 
     }
@@ -252,19 +314,19 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
 
         final IndicesExistsResponse indicesExistsResponse = client.admin().indices().exists(indicesExistsRequest).get();
 
-        if(!indicesExistsResponse.isExists()) {
+        if (!indicesExistsResponse.isExists()) {
 
             // TODO: Read this mapping from a resource file instead.
-            final String mapping = "{\n" +
-                    "                                                  \"properties\": {\n" +
-                    "                                                    \"judgments_id\": { \"type\": \"keyword\" },\n" +
-                    "                                                    \"query_id\": { \"type\": \"keyword\" },\n" +
-                    "                                                    \"query\": { \"type\": \"keyword\" },\n" +
-                    "                                                    \"document_id\": { \"type\": \"keyword\" },\n" +
-                    "                                                    \"judgment\": { \"type\": \"double\" },\n" +
-                    "                                                    \"timestamp\": { \"type\": \"date\", \"format\": \"strict_date_time\" }\n" +
-                    "                                                  }\n" +
-                    "                                              }";
+            final String mapping = "{\n"
+                + "                                                  \"properties\": {\n"
+                + "                                                    \"judgments_id\": { \"type\": \"keyword\" },\n"
+                + "                                                    \"query_id\": { \"type\": \"keyword\" },\n"
+                + "                                                    \"query\": { \"type\": \"keyword\" },\n"
+                + "                                                    \"document_id\": { \"type\": \"keyword\" },\n"
+                + "                                                    \"judgment\": { \"type\": \"double\" },\n"
+                + "                                                    \"timestamp\": { \"type\": \"date\", \"format\": \"strict_date_time\" }\n"
+                + "                                                  }\n"
+                + "                                              }";
 
             // Create the judgments index.
             final CreateIndexRequest createIndexRequest = new CreateIndexRequest(JUDGMENTS_INDEX_NAME).mapping(mapping);

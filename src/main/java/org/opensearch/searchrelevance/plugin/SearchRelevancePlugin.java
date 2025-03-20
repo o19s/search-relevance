@@ -7,6 +7,11 @@
  */
 package org.opensearch.searchrelevance.plugin;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Supplier;
+
 import org.opensearch.action.ActionRequest;
 import org.opensearch.cluster.metadata.IndexNameExpressionResolver;
 import org.opensearch.cluster.node.DiscoveryNodes;
@@ -23,11 +28,6 @@ import org.opensearch.rest.RestHandler;
 import org.opensearch.searchrelevance.rest.SearchRelevanceRestHandler;
 import org.opensearch.searchrelevance.transport.QuerySetAction;
 import org.opensearch.searchrelevance.transport.QuerySetTransportAction;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Supplier;
 
 public class SearchRelevancePlugin extends Plugin implements IngestPlugin, ActionPlugin {
 
