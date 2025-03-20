@@ -14,12 +14,13 @@ apply from: 'formatter/formatting.gradle'
 apply plugin: 'jacoco'
 apply plugin: 'com.form.diff-coverage'
 
-def pluginName = 'search-relevance'
+def pluginName = 'opensearch-search-relevance'
 def pluginDescription = 'Custom plugin'
 def packagePath = 'org.opensearch'
 def pathToPlugin = 'searchrelevance.plugin'
 def pluginClassName = 'SearchRelevancePlugin'
 group = "org.opensearch.searchrelevance"
+version = "3.0.0.0"
 
 java {
     targetCompatibility = JavaVersion.VERSION_21
