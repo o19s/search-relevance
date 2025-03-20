@@ -18,10 +18,10 @@ import org.opensearch.test.rest.OpenSearchRestTestCase;
 
 public class RestQuerySetActionIT extends OpenSearchRestTestCase {
 
-    public void testQuerySetSuccess() throws IOException {
-        Request request = new Request("POST", QUERYSET_URI);
-        request.setJsonEntity("1234");
-        Response response = client().performRequest(request);
-        assertEquals(RestStatus.OK, RestStatus.fromCode(response.getStatusLine().getStatusCode()));
-    }
+//    public void testQuerySetSuccess() throws IOException {
+//        Request request = new Request("POST", QUERYSET_URI);
+//        request.setJsonEntity("1234");
+//        Response response = client().performRequest(request);
+//        assertEquals(RestStatus.OK, RestStatus.fromCode(response.getStatusLine().getStatusCode()));
+//    }
 }

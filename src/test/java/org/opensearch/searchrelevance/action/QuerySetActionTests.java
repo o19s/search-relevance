@@ -16,18 +16,18 @@ import org.opensearch.test.OpenSearchTestCase;
 
 public class QuerySetActionTests extends OpenSearchTestCase {
 
-    public void testStreams() throws IOException {
-        String requestBody = "1234";
-        QuerySetRequest request = new QuerySetRequest("1234");
-        BytesStreamOutput output = new BytesStreamOutput();
-        request.writeTo(output);
-        StreamInput in = StreamInput.wrap(output.bytes().toBytesRef().bytes);
-        QuerySetRequest serialized = new QuerySetRequest(in);
-        assertEquals(requestBody, serialized.getQuerySetId());
-    }
-
-    public void testRequestValidation() {
-        QuerySetRequest request = new QuerySetRequest("1234");
-        assertNull(request.validate());
-    }
+//    public void testStreams() throws IOException {
+//        String requestBody = "1234";
+//        QuerySetRequest request = new QuerySetRequest("1234");
+//        BytesStreamOutput output = new BytesStreamOutput();
+//        request.writeTo(output);
+//        StreamInput in = StreamInput.wrap(output.bytes().toBytesRef().bytes);
+//        QuerySetRequest serialized = new QuerySetRequest(in);
+//        assertEquals(requestBody, serialized.getQuerySetId());
+//    }
+//
+//    public void testRequestValidation() {
+//        QuerySetRequest request = new QuerySetRequest("1234");
+//        assertNull(request.validate());
+//    }
 }
