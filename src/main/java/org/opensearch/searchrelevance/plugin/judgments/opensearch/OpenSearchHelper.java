@@ -1,5 +1,4 @@
 /*
- * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  *
  * The OpenSearch Contributors require contributions made to
@@ -8,7 +7,22 @@
  */
 package org.opensearch.searchrelevance.plugin.judgments.opensearch;
 
-import com.google.gson.Gson;
+import static org.opensearch.searchrelevance.plugin.Constants.JUDGMENTS_INDEX_NAME;
+import static org.opensearch.searchrelevance.plugin.Constants.UBI_EVENTS_INDEX_NAME;
+import static org.opensearch.searchrelevance.plugin.Constants.UBI_QUERIES_INDEX_NAME;
+import static org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClickModel.INDEX_QUERY_DOC_CTR;
+import static org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClickModel.INDEX_RANK_AGGREGATED_CTR;
+
+import java.io.IOException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.opensearch.action.bulk.BulkRequest;
@@ -27,21 +41,7 @@ import org.opensearch.searchrelevance.plugin.judgments.model.ubi.query.UbiQuery;
 import org.opensearch.searchrelevance.plugin.utils.TimeUtils;
 import org.opensearch.transport.client.Client;
 
-import java.io.IOException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
-import static org.opensearch.searchrelevance.plugin.Constants.JUDGMENTS_INDEX_NAME;
-import static org.opensearch.searchrelevance.plugin.Constants.UBI_EVENTS_INDEX_NAME;
-import static org.opensearch.searchrelevance.plugin.Constants.UBI_QUERIES_INDEX_NAME;
-import static org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClickModel.INDEX_QUERY_DOC_CTR;
-import static org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClickModel.INDEX_RANK_AGGREGATED_CTR;
+import com.google.gson.Gson;
 
 /**
  * Functionality for interacting with OpenSearch.
@@ -70,7 +70,7 @@ public class OpenSearchHelper {
     public String getUserQuery(final String queryId) throws Exception {
 
         // If it's in the cache just get it and return it.
-        if(userQueryCache.containsKey(queryId)) {
+        if (userQueryCache.containsKey(queryId)) {
             return userQueryCache.get(queryId);
         }
 
@@ -78,7 +78,7 @@ public class OpenSearchHelper {
         final UbiQuery ubiQuery = getQueryFromQueryId(queryId);
 
         // ubiQuery will be null if the query does not exist.
-        if(ubiQuery != null) {
+        if (ubiQuery != null) {
 
             userQueryCache.put(queryId, ubiQuery.getUserQuery());
             return ubiQuery.getUserQuery();
@@ -110,13 +110,13 @@ public class OpenSearchHelper {
         searchSourceBuilder.from(0);
         searchSourceBuilder.size(1);
 
-        final String[] indexes = {UBI_QUERIES_INDEX_NAME};
+        final String[] indexes = { UBI_QUERIES_INDEX_NAME };
 
         final SearchRequest searchRequest = new SearchRequest(indexes, searchSourceBuilder);
         final SearchResponse response = client.search(searchRequest).get();
 
         // If this does not return a query then we cannot calculate the judgments. Each even should have a query associated with it.
-        if(response.getHits().getHits() != null & response.getHits().getHits().length > 0) {
+        if (response.getHits().getHits() != null & response.getHits().getHits().length > 0) {
 
             final SearchHit hit = response.getHits().getHits()[0];
             return AccessController.doPrivileged((PrivilegedAction<UbiQuery>) () -> gson.fromJson(hit.getSourceAsString(), UbiQuery.class));
@@ -138,14 +138,14 @@ public class OpenSearchHelper {
         final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(qb);
 
-        final String[] indexes = {UBI_QUERIES_INDEX_NAME};
+        final String[] indexes = { UBI_QUERIES_INDEX_NAME };
 
         final SearchRequest searchRequest = new SearchRequest(indexes, searchSourceBuilder);
         final SearchResponse response = client.search(searchRequest).get();
 
         final Collection<String> queryIds = new ArrayList<>();
 
-        for(final SearchHit hit : response.getHits().getHits()) {
+        for (final SearchHit hit : response.getHits().getHits()) {
             final String queryId = hit.getSourceAsMap().get("query_id").toString();
             queryIds.add(queryId);
         }
@@ -154,7 +154,8 @@ public class OpenSearchHelper {
 
     }
 
-    public long getCountOfQueriesForUserQueryHavingResultInRankR(final String userQuery, final String objectId, final int rank) throws Exception {
+    public long getCountOfQueriesForUserQueryHavingResultInRankR(final String userQuery, final String objectId, final int rank)
+        throws Exception {
 
         long countOfTimesShownAtRank = 0;
 
@@ -162,34 +163,40 @@ public class OpenSearchHelper {
         final Collection<String> queryIds = getQueryIdsHavingUserQuery(userQuery);
 
         // For each query ID, get the events with action_name = "impression" having a match on objectId and rank (position).
-        for(final String queryId : queryIds) {
+        for (final String queryId : queryIds) {
 
-            final String query = "{\n" +
-                    "    \"bool\": {\n" +
-                    "      \"must\": [\n" +
-                    "          {\n" +
-                    "            \"term\": {\n" +
-                    "              \"query_id\": \"" + queryId + "\"\n" +
-                    "            }\n" +
-                    "          },\n" +
-                    "          {\n" +
-                    "            \"term\": {\n" +
-                    "              \"action_name\": \"impression\"\n" +
-                    "            }\n" +
-                    "          },\n" +
-                    "          {\n" +
-                    "            \"term\": {\n" +
-                    "              \"event_attributes.position.ordinal\": \"" + rank + "\"\n" +
-                    "            }\n" +
-                    "          },\n" +
-                    "          {\n" +
-                    "            \"term\": {\n" +
-                    "              \"event_attributes.object.object_id\": \"" + objectId + "\"\n" +
-                    "            }\n" +
-                    "          }\n" +
-                    "        ]\n" +
-                    "      }\n" +
-                    "    }";
+            final String query = "{\n"
+                + "    \"bool\": {\n"
+                + "      \"must\": [\n"
+                + "          {\n"
+                + "            \"term\": {\n"
+                + "              \"query_id\": \""
+                + queryId
+                + "\"\n"
+                + "            }\n"
+                + "          },\n"
+                + "          {\n"
+                + "            \"term\": {\n"
+                + "              \"action_name\": \"impression\"\n"
+                + "            }\n"
+                + "          },\n"
+                + "          {\n"
+                + "            \"term\": {\n"
+                + "              \"event_attributes.position.ordinal\": \""
+                + rank
+                + "\"\n"
+                + "            }\n"
+                + "          },\n"
+                + "          {\n"
+                + "            \"term\": {\n"
+                + "              \"event_attributes.object.object_id\": \""
+                + objectId
+                + "\"\n"
+                + "            }\n"
+                + "          }\n"
+                + "        ]\n"
+                + "      }\n"
+                + "    }";
 
             final WrapperQueryBuilder qb = QueryBuilders.wrapperQuery(query);
 
@@ -198,13 +205,13 @@ public class OpenSearchHelper {
             searchSourceBuilder.trackTotalHits(true);
             searchSourceBuilder.size(0);
 
-            final String[] indexes = {UBI_EVENTS_INDEX_NAME};
+            final String[] indexes = { UBI_EVENTS_INDEX_NAME };
 
             final SearchRequest searchRequest = new SearchRequest(indexes, searchSourceBuilder);
             final SearchResponse response = client.search(searchRequest).get();
 
             // Won't be null as long as trackTotalHits is true.
-            if(response.getHits().getTotalHits() != null) {
+            if (response.getHits().getTotalHits() != null) {
                 countOfTimesShownAtRank += response.getHits().getTotalHits().value();
             }
 
@@ -212,7 +219,7 @@ public class OpenSearchHelper {
 
         LOGGER.debug("Count of {} having {} at rank {} = {}", userQuery, objectId, rank, countOfTimesShownAtRank);
 
-        if(countOfTimesShownAtRank > 0) {
+        if (countOfTimesShownAtRank > 0) {
             LOGGER.debug("Count of {} having {} at rank {} = {}", userQuery, objectId, rank, countOfTimesShownAtRank);
         }
 
@@ -227,7 +234,7 @@ public class OpenSearchHelper {
      */
     public void indexRankAggregatedClickthrough(final Map<Integer, Double> rankAggregatedClickThrough) throws Exception {
 
-        if(!rankAggregatedClickThrough.isEmpty()) {
+        if (!rankAggregatedClickThrough.isEmpty()) {
 
             // TODO: Split this into multiple bulk insert requests.
 
@@ -239,7 +246,8 @@ public class OpenSearchHelper {
                 jsonMap.put("position", position);
                 jsonMap.put("ctr", rankAggregatedClickThrough.get(position));
 
-                final IndexRequest indexRequest = new IndexRequest(INDEX_RANK_AGGREGATED_CTR).id(UUID.randomUUID().toString()).source(jsonMap);
+                final IndexRequest indexRequest = new IndexRequest(INDEX_RANK_AGGREGATED_CTR).id(UUID.randomUUID().toString())
+                    .source(jsonMap);
 
                 request.add(indexRequest);
 
@@ -258,13 +266,13 @@ public class OpenSearchHelper {
      */
     public void indexClickthroughRates(final Map<String, Set<ClickthroughRate>> clickthroughRates) throws Exception {
 
-        if(!clickthroughRates.isEmpty()) {
+        if (!clickthroughRates.isEmpty()) {
 
             final BulkRequest request = new BulkRequest();
 
-            for(final String userQuery : clickthroughRates.keySet()) {
+            for (final String userQuery : clickthroughRates.keySet()) {
 
-                for(final ClickthroughRate clickthroughRate : clickthroughRates.get(userQuery)) {
+                for (final ClickthroughRate clickthroughRate : clickthroughRates.get(userQuery)) {
 
                     final Map<String, Object> jsonMap = new HashMap<>();
                     jsonMap.put("user_query", userQuery);
@@ -273,9 +281,8 @@ public class OpenSearchHelper {
                     jsonMap.put("ctr", clickthroughRate.getClickthroughRate());
                     jsonMap.put("object_id", clickthroughRate.getObjectId());
 
-                    final IndexRequest indexRequest = new IndexRequest(INDEX_QUERY_DOC_CTR)
-                            .id(UUID.randomUUID().toString())
-                            .source(jsonMap);
+                    final IndexRequest indexRequest = new IndexRequest(INDEX_QUERY_DOC_CTR).id(UUID.randomUUID().toString())
+                        .source(jsonMap);
 
                     request.add(indexRequest);
 
@@ -287,7 +294,7 @@ public class OpenSearchHelper {
 
                 @Override
                 public void onResponse(BulkResponse bulkItemResponses) {
-                    if(bulkItemResponses.hasFailures()) {
+                    if (bulkItemResponses.hasFailures()) {
                         LOGGER.error("Clickthrough rates were not all successfully indexed: {}", bulkItemResponses.buildFailureMessage());
                     } else {
                         LOGGER.debug("Clickthrough rates has been successfully indexed.");
@@ -318,15 +325,13 @@ public class OpenSearchHelper {
 
         final BulkRequest bulkRequest = new BulkRequest();
 
-        for(final Judgment judgment : judgments) {
+        for (final Judgment judgment : judgments) {
 
             final Map<String, Object> j = judgment.getJudgmentAsMap();
             j.put("judgments_id", judgmentsId);
             j.put("timestamp", timestamp);
 
-            final IndexRequest indexRequest = new IndexRequest(JUDGMENTS_INDEX_NAME)
-                    .id(UUID.randomUUID().toString())
-                    .source(j);
+            final IndexRequest indexRequest = new IndexRequest(JUDGMENTS_INDEX_NAME).id(UUID.randomUUID().toString()).source(j);
 
             bulkRequest.add(indexRequest);
 

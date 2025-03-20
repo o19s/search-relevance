@@ -1,5 +1,4 @@
 /*
- * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  *
  * The OpenSearch Contributors require contributions made to
@@ -36,7 +35,7 @@ public class NdcgSearchMetric extends DcgSearchMetric {
 
         double dcg = super.calculate();
 
-        if(dcg == 0) {
+        if (dcg == 0) {
 
             // The ndcg is 0. No need to continue.
             return 0;
@@ -48,7 +47,7 @@ public class NdcgSearchMetric extends DcgSearchMetric {
 
             double idcg = super.calculateDcg(idealRelevanceScores);
 
-            if(idcg == 0) {
+            if (idcg == 0) {
                 return 0;
             } else {
                 return dcg / idcg;

@@ -1,5 +1,4 @@
 /*
- * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  *
  * The OpenSearch Contributors require contributions made to
@@ -8,16 +7,7 @@
  */
 package org.opensearch.searchrelevance.plugin.samplers;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.opensearch.action.search.SearchRequest;
-import org.opensearch.action.search.SearchResponse;
-import org.opensearch.action.search.SearchScrollRequest;
-import org.opensearch.index.query.QueryBuilders;
-import org.opensearch.search.Scroll;
-import org.opensearch.search.SearchHit;
-import org.opensearch.search.builder.SearchSourceBuilder;
-import org.opensearch.transport.client.node.NodeClient;
+import static org.opensearch.searchrelevance.plugin.Constants.UBI_QUERIES_INDEX_NAME;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,8 +16,15 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.opensearch.common.settings.WriteableSetting.SettingType.TimeValue;
-import static org.opensearch.searchrelevance.plugin.Constants.UBI_QUERIES_INDEX_NAME;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.opensearch.action.search.SearchRequest;
+import org.opensearch.action.search.SearchResponse;
+import org.opensearch.action.search.SearchScrollRequest;
+import org.opensearch.index.query.QueryBuilders;
+import org.opensearch.search.SearchHit;
+import org.opensearch.search.builder.SearchSourceBuilder;
+import org.opensearch.transport.client.node.NodeClient;
 
 /**
  * An implementation of {@link AbstractQuerySampler} that uses PPTSS sampling.
@@ -48,7 +45,10 @@ public class ProbabilityProportionalToSizeAbstractQuerySampler extends AbstractQ
      * @param client The OpenSearch {@link NodeClient client}.
      * @param parameters The {@link ProbabilityProportionalToSizeParameters parameters} for the sampling.
      */
-    public ProbabilityProportionalToSizeAbstractQuerySampler(final NodeClient client, final ProbabilityProportionalToSizeParameters parameters) {
+    public ProbabilityProportionalToSizeAbstractQuerySampler(
+        final NodeClient client,
+        final ProbabilityProportionalToSizeParameters parameters
+    ) {
         this.client = client;
         this.parameters = parameters;
     }
@@ -70,10 +70,10 @@ public class ProbabilityProportionalToSizeAbstractQuerySampler extends AbstractQ
         searchSourceBuilder.size(10000);
 
         // TODO: Redo without scroll.
-        //final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(10L));
+        // final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(10L));
 
         final SearchRequest searchRequest = new SearchRequest(UBI_QUERIES_INDEX_NAME);
-        //searchRequest.scroll(scroll);
+        // searchRequest.scroll(scroll);
         searchRequest.source(searchSourceBuilder);
 
         // TODO: Don't use .get()
@@ -86,19 +86,19 @@ public class ProbabilityProportionalToSizeAbstractQuerySampler extends AbstractQ
 
         while (searchHits != null && searchHits.length > 0) {
 
-            for(final SearchHit hit : searchHits) {
+            for (final SearchHit hit : searchHits) {
                 final Map<String, Object> fields = hit.getSourceAsMap();
                 userQueries.add(fields.get("user_query").toString());
-              //  LOGGER.info("user queries count: {} user query: {}", userQueries.size(), fields.get("user_query").toString());
+                // LOGGER.info("user queries count: {} user query: {}", userQueries.size(), fields.get("user_query").toString());
             }
 
             final SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
-            //scrollRequest.scroll(scroll);
+            // scrollRequest.scroll(scroll);
 
             // TODO: Don't use .get()
-            //searchResponse = client.searchScroll(scrollRequest).get();
+            // searchResponse = client.searchScroll(scrollRequest).get();
 
-           // scrollId = searchResponse.getScrollId();
+            // scrollId = searchResponse.getScrollId();
             searchHits = searchResponse.getHits().getHits();
 
         }
@@ -108,7 +108,7 @@ public class ProbabilityProportionalToSizeAbstractQuerySampler extends AbstractQ
         final Map<String, Long> weights = new HashMap<>();
 
         // Increment the weight for each user query.
-        for(final String userQuery : userQueries) {
+        for (final String userQuery : userQueries) {
             weights.merge(userQuery, 1L, Long::sum);
         }
 
@@ -117,14 +117,14 @@ public class ProbabilityProportionalToSizeAbstractQuerySampler extends AbstractQ
 
         // Calculate the normalized weights by dividing by the total number of queries.
         final Map<String, Double> normalizedWeights = new HashMap<>();
-        for(final String userQuery : weights.keySet()) {
+        for (final String userQuery : weights.keySet()) {
             normalizedWeights.put(userQuery, weights.get(userQuery) / (double) countOfQueries);
-            //LOGGER.info("{}: {}/{} = {}", userQuery, weights.get(userQuery), countOfQueries, normalizedWeights.get(userQuery));
+            // LOGGER.info("{}: {}/{} = {}", userQuery, weights.get(userQuery), countOfQueries, normalizedWeights.get(userQuery));
         }
 
         // Ensure all normalized weights sum to 1.
         final double sumOfNormalizedWeights = normalizedWeights.values().stream().reduce(0.0, Double::sum);
-        if(!compare(1.0, sumOfNormalizedWeights)) {
+        if (!compare(1.0, sumOfNormalizedWeights)) {
             throw new RuntimeException("Summed normalized weights do not equal 1.0: Actual value: " + sumOfNormalizedWeights);
         } else {
             LOGGER.info("Summed normalized weights sum to {}", sumOfNormalizedWeights);
@@ -141,7 +141,7 @@ public class ProbabilityProportionalToSizeAbstractQuerySampler extends AbstractQ
 
         // TODO: How to short-circuit this such that if the same query gets picked over and over, the loop will never end.
         final int max = 5000;
-        while(querySet.size() < parameters.getQuerySetSize() && count < max) {
+        while (querySet.size() < parameters.getQuerySetSize() && count < max) {
 
             // Make a random number not yet used.
             double random;
@@ -153,9 +153,9 @@ public class ProbabilityProportionalToSizeAbstractQuerySampler extends AbstractQ
             // Find the weight closest to the random weight in the map of deltas.
             double smallestDelta = Integer.MAX_VALUE;
             String closestQuery = null;
-            for(final String query : normalizedWeights.keySet()) {
+            for (final String query : normalizedWeights.keySet()) {
                 final double delta = Math.abs(normalizedWeights.get(query) - random);
-                if(delta < smallestDelta) {
+                if (delta < smallestDelta) {
                     smallestDelta = delta;
                     closestQuery = query;
                 }
@@ -164,7 +164,7 @@ public class ProbabilityProportionalToSizeAbstractQuerySampler extends AbstractQ
             querySet.put(closestQuery, weights.get(closestQuery));
             count++;
 
-            //LOGGER.info("Generated random value: {}; Smallest delta = {}; Closest query = {}", random, smallestDelta, closestQuery);
+            // LOGGER.info("Generated random value: {}; Smallest delta = {}; Closest query = {}", random, smallestDelta, closestQuery);
 
         }
 

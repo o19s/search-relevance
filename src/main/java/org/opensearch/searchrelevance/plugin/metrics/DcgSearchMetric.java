@@ -1,5 +1,4 @@
 /*
- * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  *
  * The OpenSearch Contributors require contributions made to
@@ -48,7 +47,7 @@ public class DcgSearchMetric extends SearchMetric {
             double d = log2(i + 2);
             double n = Math.pow(2, relevanceScores.get(i)) - 1;
 
-            if(d != 0) {
+            if (d != 0) {
                 dcg += (n / d);
             }
 

@@ -1,5 +1,4 @@
 /*
- * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  *
  * The OpenSearch Contributors require contributions made to
@@ -8,10 +7,10 @@
  */
 package org.opensearch.searchrelevance.plugin.runners;
 
-import org.opensearch.searchrelevance.plugin.metrics.SearchMetric;
-
 import java.util.Collection;
 import java.util.List;
+
+import org.opensearch.searchrelevance.plugin.metrics.SearchMetric;
 
 /**
  * Contains the search results for a single query.
@@ -33,7 +32,13 @@ public class QueryResult {
      * @param searchMetrics A collection of {@link SearchMetric} for this query.
      * @param frogs The percentage of documents not having a judgment.
      */
-    public QueryResult(final String query, final List<String> orderedDocumentIds, final int k, final Collection<SearchMetric> searchMetrics, final double frogs) {
+    public QueryResult(
+        final String query,
+        final List<String> orderedDocumentIds,
+        final int k,
+        final Collection<SearchMetric> searchMetrics,
+        final double frogs
+    ) {
         this.query = query;
         this.orderedDocumentIds = orderedDocumentIds;
         this.k = k;

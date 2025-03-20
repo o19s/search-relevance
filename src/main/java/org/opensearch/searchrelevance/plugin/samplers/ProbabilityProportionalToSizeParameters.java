@@ -1,5 +1,4 @@
 /*
- * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  *
  * The OpenSearch Contributors require contributions made to
@@ -10,7 +9,12 @@ package org.opensearch.searchrelevance.plugin.samplers;
 
 public class ProbabilityProportionalToSizeParameters extends AbstractSamplerParameters {
 
-    public ProbabilityProportionalToSizeParameters(final String name, final String description, final String sampling, final int querySetSize) {
+    public ProbabilityProportionalToSizeParameters(
+        final String name,
+        final String description,
+        final String sampling,
+        final int querySetSize
+    ) {
         super(name, description, sampling, querySetSize);
     }
 

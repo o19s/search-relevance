@@ -1,5 +1,4 @@
 /*
- * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  *
  * The OpenSearch Contributors require contributions made to
@@ -8,9 +7,9 @@
  */
 package org.opensearch.searchrelevance.plugin.judgments.model.ubi.query;
 
-import com.google.gson.annotations.SerializedName;
-
 import java.util.Map;
+
+import com.google.gson.annotations.SerializedName;
 
 /**
  * Represents a UBI query.

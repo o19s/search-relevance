@@ -1,5 +1,4 @@
 /*
- * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  *
  * The OpenSearch Contributors require contributions made to
@@ -8,9 +7,9 @@
  */
 package org.opensearch.searchrelevance.plugin.metrics;
 
-import org.opensearch.test.OpenSearchTestCase;
-
 import java.util.List;
+
+import org.opensearch.test.OpenSearchTestCase;
 
 public class DcgSearchMetricTests extends OpenSearchTestCase {
 

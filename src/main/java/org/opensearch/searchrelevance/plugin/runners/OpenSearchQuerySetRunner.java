@@ -1,5 +1,4 @@
 /*
- * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  *
  * The OpenSearch Contributors require contributions made to
@@ -7,6 +6,16 @@
  * compatible open source license.
  */
 package org.opensearch.searchrelevance.plugin.runners;
+
+import static org.opensearch.searchrelevance.plugin.Constants.DASHBOARD_METRICS_INDEX_NAME;
+import static org.opensearch.searchrelevance.plugin.Constants.QUERY_PLACEHOLDER;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,16 +39,6 @@ import org.opensearch.searchrelevance.plugin.metrics.SearchMetric;
 import org.opensearch.searchrelevance.plugin.utils.TimeUtils;
 import org.opensearch.transport.client.Client;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.opensearch.searchrelevance.plugin.Constants.DASHBOARD_METRICS_INDEX_NAME;
-import static org.opensearch.searchrelevance.plugin.Constants.QUERY_PLACEHOLDER;
-
 /**
  * A {@link AbstractQuerySetRunner} for Amazon OpenSearch.
  */
@@ -57,9 +56,16 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
     }
 
     @Override
-    public QuerySetRunResult run(final String querySetId, final String judgmentsId, final String index,
-                                 final String searchPipeline, final String idField, final String query,
-                                 final int k, final double threshold) throws Exception {
+    public QuerySetRunResult run(
+        final String querySetId,
+        final String judgmentsId,
+        final String index,
+        final String searchPipeline,
+        final String idField,
+        final String query,
+        final int k,
+        final double threshold
+    ) throws Exception {
 
         final Collection<Map<String, Long>> querySet = getQuerySet(querySetId);
         LOGGER.info("Found {} queries in query set {}", querySet.size(), querySetId);
@@ -84,8 +90,8 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
                     searchSourceBuilder.from(0);
                     searchSourceBuilder.size(k);
 
-                    final String[] includeFields = new String[]{idField};
-                    final String[] excludeFields = new String[]{};
+                    final String[] includeFields = new String[] { idField };
+                    final String[] excludeFields = new String[] {};
                     searchSourceBuilder.fetchSource(includeFields, excludeFields);
 
                     // LOGGER.info(searchSourceBuilder.toString());
@@ -93,7 +99,7 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
                     final SearchRequest searchRequest = new SearchRequest(index);
                     searchRequest.source(searchSourceBuilder);
 
-                    if(searchPipeline != null) {
+                    if (searchPipeline != null) {
                         searchSourceBuilder.pipeline(searchPipeline);
                         searchRequest.pipeline(searchPipeline);
                     }
@@ -113,7 +119,7 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
 
                                 final String documentId;
 
-                                if("_id".equals(idField)) {
+                                if ("_id".equals(idField)) {
                                     documentId = hit.getId();
                                 } else {
                                     // TODO: Need to check this field actually exists.
@@ -131,14 +137,29 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
                                 // Calculate the metrics for this query.
                                 final SearchMetric dcgSearchMetric = new DcgSearchMetric(k, relevanceScores.getRelevanceScores());
                                 final SearchMetric ndcgSearchmetric = new NdcgSearchMetric(k, relevanceScores.getRelevanceScores());
-                                final SearchMetric precisionSearchMetric = new PrecisionSearchMetric(k, threshold, relevanceScores.getRelevanceScores());
+                                final SearchMetric precisionSearchMetric = new PrecisionSearchMetric(
+                                    k,
+                                    threshold,
+                                    relevanceScores.getRelevanceScores()
+                                );
 
-                                final Collection<SearchMetric> searchMetrics = List.of(dcgSearchMetric, ndcgSearchmetric, precisionSearchMetric);
+                                final Collection<SearchMetric> searchMetrics = List.of(
+                                    dcgSearchMetric,
+                                    ndcgSearchmetric,
+                                    precisionSearchMetric
+                                );
 
-                                queryResults.add(new QueryResult(userQuery, orderedDocumentIds, k, searchMetrics, relevanceScores.getFrogs()));
+                                queryResults.add(
+                                    new QueryResult(userQuery, orderedDocumentIds, k, searchMetrics, relevanceScores.getFrogs())
+                                );
 
                             } catch (Exception ex) {
-                                LOGGER.error("Unable to get relevance scores for judgments {} and user query {}.", judgmentsId, userQuery, ex);
+                                LOGGER.error(
+                                    "Unable to get relevance scores for judgments {} and user query {}.",
+                                    judgmentsId,
+                                    userQuery,
+                                    ex
+                                );
                             }
 
                         }
@@ -157,17 +178,17 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
             // Sum up the metrics for each query per metric type.
             final int querySetSize = queryResults.size();
             final Map<String, Double> sumOfMetrics = new HashMap<>();
-            for(final QueryResult queryResult : queryResults) {
-                for(final SearchMetric searchMetric : queryResult.getSearchMetrics()) {
-                    //LOGGER.info("Summing: {} - {}", searchMetric.getName(), searchMetric.getValue());
+            for (final QueryResult queryResult : queryResults) {
+                for (final SearchMetric searchMetric : queryResult.getSearchMetrics()) {
+                    // LOGGER.info("Summing: {} - {}", searchMetric.getName(), searchMetric.getValue());
                     sumOfMetrics.merge(searchMetric.getName(), searchMetric.getValue(), Double::sum);
                 }
             }
 
             // Now divide by the number of queries.
             final Map<String, Double> querySetMetrics = new HashMap<>();
-            for(final String metric : sumOfMetrics.keySet()) {
-                //LOGGER.info("Dividing by the query set size: {} / {}", sumOfMetrics.get(metric), querySetSize);
+            for (final String metric : sumOfMetrics.keySet()) {
+                // LOGGER.info("Dividing by the query set size: {} / {}", sumOfMetrics.get(metric), querySetSize);
                 querySetMetrics.put(metric, sumOfMetrics.get(metric) / querySetSize);
             }
 
@@ -199,23 +220,23 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
             @Override
             public void onResponse(IndicesExistsResponse indicesExistsResponse) {
 
-                if(!indicesExistsResponse.isExists()) {
+                if (!indicesExistsResponse.isExists()) {
 
                     // Create the index.
                     // TODO: Read this mapping from a resource file instead.
-                    final String mapping = "{\n" +
-                            "              \"properties\": {\n" +
-                            "                \"datetime\": { \"type\": \"date\", \"format\": \"strict_date_time\" },\n" +
-                            "                \"search_config\": { \"type\": \"keyword\" },\n" +
-                            "                \"query_set_id\": { \"type\": \"keyword\" },\n" +
-                            "                \"query\": { \"type\": \"keyword\" },\n" +
-                            "                \"metric\": { \"type\": \"keyword\" },\n" +
-                            "                \"value\": { \"type\": \"double\" },\n" +
-                            "                \"application\": { \"type\": \"keyword\" },\n" +
-                            "                \"evaluation_id\": { \"type\": \"keyword\" },\n" +
-                            "                \"frogs_percent\": { \"type\": \"double\" }\n" +
-                            "              }\n" +
-                            "          }";
+                    final String mapping = "{\n"
+                        + "              \"properties\": {\n"
+                        + "                \"datetime\": { \"type\": \"date\", \"format\": \"strict_date_time\" },\n"
+                        + "                \"search_config\": { \"type\": \"keyword\" },\n"
+                        + "                \"query_set_id\": { \"type\": \"keyword\" },\n"
+                        + "                \"query\": { \"type\": \"keyword\" },\n"
+                        + "                \"metric\": { \"type\": \"keyword\" },\n"
+                        + "                \"value\": { \"type\": \"double\" },\n"
+                        + "                \"application\": { \"type\": \"keyword\" },\n"
+                        + "                \"evaluation_id\": { \"type\": \"keyword\" },\n"
+                        + "                \"frogs_percent\": { \"type\": \"double\" }\n"
+                        + "              }\n"
+                        + "          }";
 
                     // Create the judgments index.
                     final CreateIndexRequest createIndexRequest = new CreateIndexRequest(DASHBOARD_METRICS_INDEX_NAME).mapping(mapping);
@@ -248,9 +269,9 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
         final BulkRequest bulkRequest = new BulkRequest();
         final String timestamp = TimeUtils.getTimestamp();
 
-        for(final QueryResult queryResult : result.getQueryResults()) {
+        for (final QueryResult queryResult : result.getQueryResults()) {
 
-            for(final SearchMetric searchMetric : queryResult.getSearchMetrics()) {
+            for (final SearchMetric searchMetric : queryResult.getSearchMetrics()) {
 
                 // TODO: Make sure all of these items have values.
                 final Map<String, Object> metrics = new HashMap<>();

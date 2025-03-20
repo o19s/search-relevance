@@ -1,5 +1,4 @@
 /*
- * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  *
  * The OpenSearch Contributors require contributions made to
@@ -31,7 +30,7 @@ public class IncrementalUserQueryHash implements UserQueryHash {
 
         final int hash;
 
-        if(userQueries.containsKey(userQuery)) {
+        if (userQueries.containsKey(userQuery)) {
 
             return userQueries.get(userQuery);
 
@@ -40,7 +39,6 @@ public class IncrementalUserQueryHash implements UserQueryHash {
             userQueries.put(userQuery, count);
             hash = count;
             count++;
-
 
         }
 

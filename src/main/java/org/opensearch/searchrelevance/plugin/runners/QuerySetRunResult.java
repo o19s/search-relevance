@@ -1,5 +1,4 @@
 /*
- * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  *
  * The OpenSearch Contributors require contributions made to
@@ -8,14 +7,14 @@
  */
 package org.opensearch.searchrelevance.plugin.runners;
 
-import org.opensearch.searchrelevance.plugin.metrics.SearchMetric;
-import org.opensearch.searchrelevance.plugin.utils.TimeUtils;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.opensearch.searchrelevance.plugin.metrics.SearchMetric;
+import org.opensearch.searchrelevance.plugin.utils.TimeUtils;
 
 /**
  * The results of a query set run.
@@ -35,7 +34,12 @@ public class QuerySetRunResult {
      * @param queryResults A collection of {@link QueryResult} that contains the queries and search results.
      * @param metrics A map of metric name to value.
      */
-    public QuerySetRunResult(final String runId, final String querySetId, final List<QueryResult> queryResults, final Map<String, Double> metrics) {
+    public QuerySetRunResult(
+        final String runId,
+        final String querySetId,
+        final List<QueryResult> queryResults,
+        final Map<String, Double> metrics
+    ) {
         this.runId = runId;
         this.querySetId = querySetId;
         this.queryResults = queryResults;
@@ -83,7 +87,7 @@ public class QuerySetRunResult {
 
         final Collection<Map<String, Object>> qs = new ArrayList<>();
 
-        for(final QueryResult queryResult : queryResults) {
+        for (final QueryResult queryResult : queryResults) {
 
             final Map<String, Object> q = new HashMap<>();
 
@@ -92,7 +96,7 @@ public class QuerySetRunResult {
             q.put("frogs", queryResult.getFrogs());
 
             // Calculate and add each metric to the map.
-            for(final SearchMetric searchMetric : queryResult.getSearchMetrics()) {
+            for (final SearchMetric searchMetric : queryResult.getSearchMetrics()) {
                 q.put(searchMetric.getName(), searchMetric.calculate());
             }
 
@@ -103,6 +107,5 @@ public class QuerySetRunResult {
         return qs;
 
     }
-
 
 }

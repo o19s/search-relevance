@@ -1,5 +1,4 @@
 /*
- * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  *
  * The OpenSearch Contributors require contributions made to
@@ -8,12 +7,12 @@
  */
 package org.opensearch.searchrelevance.plugin.judgments.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.opensearch.searchrelevance.plugin.utils.MathUtils;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A judgment of a search result's quality for a given query.

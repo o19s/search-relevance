@@ -1,5 +1,4 @@
 /*
- * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  *
  * The OpenSearch Contributors require contributions made to
@@ -42,8 +41,8 @@ public class PrecisionSearchMetric extends SearchMetric {
 
         double numberOfRelevantItems = 0;
 
-        for(final double relevanceScore : relevanceScores) {
-            if(relevanceScore >= threshold) {
+        for (final double relevanceScore : relevanceScores) {
+            if (relevanceScore >= threshold) {
                 numberOfRelevantItems++;
             }
         }

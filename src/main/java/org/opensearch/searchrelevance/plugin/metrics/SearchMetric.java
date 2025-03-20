@@ -1,5 +1,4 @@
 /*
- * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  *
  * The OpenSearch Contributors require contributions made to
@@ -54,7 +53,7 @@ public abstract class SearchMetric {
      */
     public double getValue() {
 
-        if(Double.isNaN(value)) {
+        if (Double.isNaN(value)) {
             this.value = calculate();
         }
 

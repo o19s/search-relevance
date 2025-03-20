@@ -1,5 +1,4 @@
 /*
- * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  *
  * The OpenSearch Contributors require contributions made to
@@ -43,7 +42,14 @@ public class ClickthroughRate {
 
     @Override
     public String toString() {
-        return "object_id: " + objectId + ", clicks: "  + clicks + ", events: " + impressions + ", ctr: " + MathUtils.round(getClickthroughRate());
+        return "object_id: "
+            + objectId
+            + ", clicks: "
+            + clicks
+            + ", events: "
+            + impressions
+            + ", ctr: "
+            + MathUtils.round(getClickthroughRate());
     }
 
     /**

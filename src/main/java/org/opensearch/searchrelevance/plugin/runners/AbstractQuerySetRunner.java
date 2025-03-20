@@ -1,5 +1,4 @@
 /*
- * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  *
  * The OpenSearch Contributors require contributions made to
@@ -7,6 +6,14 @@
  * compatible open source license.
  */
 package org.opensearch.searchrelevance.plugin.runners;
+
+import static org.opensearch.searchrelevance.plugin.Constants.JUDGMENTS_INDEX_NAME;
+import static org.opensearch.searchrelevance.plugin.Constants.QUERY_SETS_INDEX_NAME;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,14 +23,6 @@ import org.opensearch.index.query.BoolQueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.builder.SearchSourceBuilder;
 import org.opensearch.transport.client.Client;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
-import static org.opensearch.searchrelevance.plugin.Constants.JUDGMENTS_INDEX_NAME;
-import static org.opensearch.searchrelevance.plugin.Constants.QUERY_SETS_INDEX_NAME;
 
 /**
  * Base class for query set runners. Classes that extend this class
@@ -53,9 +52,16 @@ public abstract class AbstractQuerySetRunner {
      *                  less than this value will be assigned a binary judgment value of 0.
      * @return The query set {@link QuerySetRunResult results} and calculated metrics.
      */
-    abstract QuerySetRunResult run(String querySetId, final String judgmentsId, final String index, final String searchPipeline,
-                                   final String idField, final String query, final int k,
-                                   final double threshold) throws Exception;
+    abstract QuerySetRunResult run(
+        String querySetId,
+        final String judgmentsId,
+        final String index,
+        final String searchPipeline,
+        final String idField,
+        final String query,
+        final int k,
+        final double threshold
+    ) throws Exception;
 
     /**
      * Saves the query set results to a persistent store, which may be the search engine itself.
@@ -84,7 +90,7 @@ public abstract class AbstractQuerySetRunner {
         // TODO: Don't use .get()
         final SearchResponse searchResponse = client.search(searchRequest).get();
 
-        if(searchResponse.getHits().getHits().length > 0) {
+        if (searchResponse.getHits().getHits().length > 0) {
 
             // The queries from the query set that will be run.
             return (Collection<Map<String, Long>>) searchResponse.getHits().getAt(0).getSourceAsMap().get("queries");
@@ -124,7 +130,7 @@ public abstract class AbstractQuerySetRunner {
         searchSourceBuilder.size(1);
 
         // Only include the judgment field in the response.
-        final String[] includeFields = new String[] {"judgment"};
+        final String[] includeFields = new String[] { "judgment" };
         final String[] excludeFields = new String[] {};
         searchSourceBuilder.fetchSource(includeFields, excludeFields);
 
@@ -141,7 +147,7 @@ public abstract class AbstractQuerySetRunner {
             // LOGGER.debug("Judgment contains a value: {}", j.get("judgment"));
 
             // TODO: Why does this not exist in some cases?
-            if(j.containsKey("judgment")) {
+            if (j.containsKey("judgment")) {
                 judgment = (Double) j.get("judgment");
             }
 
@@ -165,7 +171,12 @@ public abstract class AbstractQuerySetRunner {
      * @return An ordered list of relevance scores for the query / document pairs.
      * @throws Exception Thrown if a judgment cannot be retrieved.
      */
-    protected RelevanceScores getRelevanceScores(final String judgmentsId, final String query, final List<String> orderedDocumentIds, final int k) throws Exception {
+    protected RelevanceScores getRelevanceScores(
+        final String judgmentsId,
+        final String query,
+        final List<String> orderedDocumentIds,
+        final int k
+    ) throws Exception {
 
         // Ordered list of scores.
         final List<Double> scores = new ArrayList<>();
@@ -182,11 +193,17 @@ public abstract class AbstractQuerySetRunner {
             final Double judgmentValue = getJudgmentValue(judgmentsId, query, documentId);
 
             // If a judgment for this query/doc pair is not found, Double.NaN will be returned.
-            if(!Double.isNaN(judgmentValue)) {
-                LOGGER.info("Score found for document ID {} with judgments {} and query {} = {}", documentId, judgmentsId, query, judgmentValue);
+            if (!Double.isNaN(judgmentValue)) {
+                LOGGER.info(
+                    "Score found for document ID {} with judgments {} and query {} = {}",
+                    documentId,
+                    judgmentsId,
+                    query,
+                    judgmentValue
+                );
                 scores.add(judgmentValue);
             } else {
-                //LOGGER.info("No score found for document ID {} with judgments {} and query {}", documentId, judgmentsId, query);
+                // LOGGER.info("No score found for document ID {} with judgments {} and query {}", documentId, judgmentsId, query);
                 documentsWithoutJudgmentsCount++;
             }
 
@@ -194,7 +211,7 @@ public abstract class AbstractQuerySetRunner {
 
         double frogs = ((double) documentsWithoutJudgmentsCount) / orderedDocumentIds.size();
 
-        if(Double.isNaN(frogs)) {
+        if (Double.isNaN(frogs)) {
             frogs = 1.0;
         }
 

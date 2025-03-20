@@ -1,5 +1,4 @@
 /*
- * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  *
  * The OpenSearch Contributors require contributions made to
@@ -8,17 +7,17 @@
  */
 package org.opensearch.searchrelevance.plugin.samplers;
 
+import static org.opensearch.searchrelevance.plugin.Constants.UBI_QUERIES_INDEX_NAME;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.builder.SearchSourceBuilder;
 import org.opensearch.transport.client.node.NodeClient;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.opensearch.searchrelevance.plugin.Constants.UBI_QUERIES_INDEX_NAME;
 
 /**
  * An implementation of {@link AbstractQuerySampler} that uses all UBI queries without any sampling.
@@ -61,13 +60,13 @@ public class AllQueriesQuerySampler extends AbstractQuerySampler {
 
         final Map<String, Long> queries = new HashMap<>();
 
-        for(final SearchHit hit : searchResponse.getHits().getHits()) {
+        for (final SearchHit hit : searchResponse.getHits().getHits()) {
 
             final Map<String, Object> fields = hit.getSourceAsMap();
             queries.merge(fields.get("user_query").toString(), 1L, Long::sum);
 
             // Will be useful for paging once implemented.
-            if(queries.size() > parameters.getQuerySetSize()) {
+            if (queries.size() > parameters.getQuerySetSize()) {
                 break;
             }
 

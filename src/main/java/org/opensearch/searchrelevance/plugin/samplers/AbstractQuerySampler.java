@@ -1,5 +1,4 @@
 /*
- * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  *
  * The OpenSearch Contributors require contributions made to
@@ -7,6 +6,14 @@
  * compatible open source license.
  */
 package org.opensearch.searchrelevance.plugin.samplers;
+
+import static org.opensearch.searchrelevance.plugin.Constants.QUERY_SETS_INDEX_NAME;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,14 +23,6 @@ import org.opensearch.action.support.WriteRequest;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.searchrelevance.plugin.utils.TimeUtils;
 import org.opensearch.transport.client.node.NodeClient;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.opensearch.searchrelevance.plugin.Constants.QUERY_SETS_INDEX_NAME;
 
 /**
  * An interface for sampling UBI queries.
@@ -47,14 +46,20 @@ public abstract class AbstractQuerySampler {
     /**
      * Index the query set.
      */
-    protected String indexQuerySet(final NodeClient client, final String name, final String description, final String sampling, Map<String, Long> queries) throws Exception {
+    protected String indexQuerySet(
+        final NodeClient client,
+        final String name,
+        final String description,
+        final String sampling,
+        Map<String, Long> queries
+    ) throws Exception {
 
         LOGGER.info("Indexing {} queries for query set {}", queries.size(), name);
 
         final Collection<Map<String, Long>> querySetQueries = new ArrayList<>();
 
         // Convert the queries map to an object.
-        for(final String query : queries.keySet()) {
+        for (final String query : queries.keySet()) {
 
             // Map of the query itself to the frequency of the query.
             final Map<String, Long> querySetQuery = new HashMap<>();
@@ -75,9 +80,9 @@ public abstract class AbstractQuerySampler {
 
         // TODO: Create a mapping for the query set index.
         final IndexRequest indexRequest = new IndexRequest().index(QUERY_SETS_INDEX_NAME)
-                .id(querySetId)
-                .source(querySet)
-                .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
+            .id(querySetId)
+            .source(querySet)
+            .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
 
         client.index(indexRequest, new ActionListener<>() {
 

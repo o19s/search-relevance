@@ -1,5 +1,4 @@
 /*
- * Copyright OpenSearch Contributors
  * SPDX-License-Identifier: Apache-2.0
  *
  * The OpenSearch Contributors require contributions made to
@@ -23,7 +22,6 @@ public class RelevanceScores {
     public List<Double> getRelevanceScores() {
         return relevanceScores;
     }
-
 
     public double getFrogs() {
         return frogs;
