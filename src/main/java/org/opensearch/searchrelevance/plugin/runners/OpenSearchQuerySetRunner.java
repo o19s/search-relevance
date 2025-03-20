@@ -19,7 +19,6 @@ import org.opensearch.action.bulk.BulkResponse;
 import org.opensearch.action.index.IndexRequest;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
-import org.opensearch.client.Client;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
@@ -29,6 +28,7 @@ import org.opensearch.searchrelevance.plugin.metrics.NdcgSearchMetric;
 import org.opensearch.searchrelevance.plugin.metrics.PrecisionSearchMetric;
 import org.opensearch.searchrelevance.plugin.metrics.SearchMetric;
 import org.opensearch.searchrelevance.plugin.utils.TimeUtils;
+import org.opensearch.transport.client.Client;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -10,10 +10,10 @@ package org.opensearch.searchrelevance.plugin.samplers;
 
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
-import org.opensearch.client.node.NodeClient;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.builder.SearchSourceBuilder;
+import org.opensearch.transport.client.node.NodeClient;
 
 import java.util.HashMap;
 import java.util.Map;

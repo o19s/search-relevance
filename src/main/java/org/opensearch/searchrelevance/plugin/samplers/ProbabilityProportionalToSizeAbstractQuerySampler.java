@@ -13,11 +13,11 @@ import org.apache.logging.log4j.Logger;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.action.search.SearchScrollRequest;
-import org.opensearch.client.node.NodeClient;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.Scroll;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.builder.SearchSourceBuilder;
+import org.opensearch.transport.client.node.NodeClient;
 
 import java.util.ArrayList;
 import java.util.Collection;

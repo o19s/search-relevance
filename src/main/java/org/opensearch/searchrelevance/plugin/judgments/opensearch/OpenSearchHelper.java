@@ -16,7 +16,6 @@ import org.opensearch.action.bulk.BulkResponse;
 import org.opensearch.action.index.IndexRequest;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
-import org.opensearch.client.Client;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.index.query.WrapperQueryBuilder;
@@ -26,6 +25,7 @@ import org.opensearch.searchrelevance.plugin.judgments.model.ClickthroughRate;
 import org.opensearch.searchrelevance.plugin.judgments.model.Judgment;
 import org.opensearch.searchrelevance.plugin.judgments.model.ubi.query.UbiQuery;
 import org.opensearch.searchrelevance.plugin.utils.TimeUtils;
+import org.opensearch.transport.client.Client;
 
 import java.io.IOException;
 import java.security.AccessController;
@@ -205,7 +205,7 @@ public class OpenSearchHelper {
 
             // Won't be null as long as trackTotalHits is true.
             if(response.getHits().getTotalHits() != null) {
-                countOfTimesShownAtRank += response.getHits().getTotalHits().value;
+                countOfTimesShownAtRank += response.getHits().getTotalHits().value();
             }
 
         }

@@ -13,9 +13,9 @@ import org.apache.logging.log4j.Logger;
 import org.opensearch.action.index.IndexRequest;
 import org.opensearch.action.index.IndexResponse;
 import org.opensearch.action.support.WriteRequest;
-import org.opensearch.client.node.NodeClient;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.searchrelevance.plugin.utils.TimeUtils;
+import org.opensearch.transport.client.node.NodeClient;
 
 import java.util.ArrayList;
 import java.util.Collection;

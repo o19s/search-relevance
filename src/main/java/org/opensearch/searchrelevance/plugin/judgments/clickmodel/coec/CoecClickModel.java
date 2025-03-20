@@ -14,8 +14,6 @@ import org.apache.logging.log4j.Logger;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.action.search.SearchScrollRequest;
-import org.opensearch.client.Client;
-import org.opensearch.client.Requests;
 import org.opensearch.common.unit.TimeValue;
 import org.opensearch.index.query.BoolQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;
@@ -35,6 +33,8 @@ import org.opensearch.searchrelevance.plugin.judgments.model.ubi.event.UbiEvent;
 import org.opensearch.searchrelevance.plugin.judgments.opensearch.OpenSearchHelper;
 import org.opensearch.searchrelevance.plugin.judgments.queryhash.IncrementalUserQueryHash;
 import org.opensearch.searchrelevance.plugin.utils.MathUtils;
+import org.opensearch.transport.client.Client;
+import org.opensearch.transport.client.Requests;
 
 import java.io.IOException;
 import java.util.Collection;
