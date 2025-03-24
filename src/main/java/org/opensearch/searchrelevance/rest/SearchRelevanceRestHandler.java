@@ -7,7 +7,6 @@
  */
 package org.opensearch.searchrelevance.rest;
 
-import static org.opensearch.searchrelevance.plugin.Constants.JUDGMENTS_INDEX_NAME;
 import static org.opensearch.searchrelevance.plugin.Constants.QUERY_PLACEHOLDER;
 
 import java.io.IOException;
@@ -16,16 +15,15 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.opensearch.action.admin.indices.create.CreateIndexRequest;
-import org.opensearch.action.admin.indices.exists.indices.IndicesExistsRequest;
-import org.opensearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.opensearch.core.common.bytes.BytesReference;
 import org.opensearch.core.rest.RestStatus;
 import org.opensearch.rest.BaseRestHandler;
 import org.opensearch.rest.BytesRestResponse;
 import org.opensearch.rest.RestRequest;
+import org.opensearch.searchrelevance.plugin.Constants;
 import org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClickModel;
 import org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClickModelParameters;
+import org.opensearch.searchrelevance.plugin.judgments.opensearch.OpenSearchHelper;
 import org.opensearch.searchrelevance.plugin.runners.OpenSearchQuerySetRunner;
 import org.opensearch.searchrelevance.plugin.runners.QuerySetRunResult;
 import org.opensearch.searchrelevance.plugin.samplers.AllQueriesQuerySampler;
@@ -59,6 +57,8 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
 
+        final OpenSearchHelper openSearchHelper = new OpenSearchHelper(client);
+
         // Handle managing query sets.
         if (QUERYSET_MANAGEMENT_URL.equalsIgnoreCase(request.path())) {
 
@@ -84,7 +84,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                             sampling,
                             querySetSize
                         );
-                        final AllQueriesQuerySampler sampler = new AllQueriesQuerySampler(client, parameters);
+                        final AllQueriesQuerySampler sampler = new AllQueriesQuerySampler(openSearchHelper, client, parameters);
 
                         // Sample and index the queries.
                         final String querySetId = sampler.sample();
@@ -111,6 +111,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                         querySetSize
                     );
                     final ProbabilityProportionalToSizeAbstractQuerySampler sampler = new ProbabilityProportionalToSizeAbstractQuerySampler(
+                        openSearchHelper,
                         client,
                         parameters
                     );
@@ -190,7 +191,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
 
             try {
 
-                final OpenSearchQuerySetRunner openSearchQuerySetRunner = new OpenSearchQuerySetRunner(client);
+                final OpenSearchQuerySetRunner openSearchQuerySetRunner = new OpenSearchQuerySetRunner(client, openSearchHelper);
                 final QuerySetRunResult querySetRunResult = openSearchQuerySetRunner.run(
                     querySetId,
                     judgmentsId,
@@ -231,8 +232,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                     // TODO: Run this in a separate thread.
                     try {
 
-                        // Create the judgments index.
-                        createJudgmentsIndex(client);
+                        openSearchHelper.createIndexIfNotExists(client, Constants.JUDGMENTS_INDEX_NAME, Constants.JUDGMENTS_INDEX_MAPPING);
 
                         judgmentsId = coecClickModel.calculateJudgments();
 
@@ -303,37 +303,6 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
             return restChannel -> restChannel.sendResponse(
                 new BytesRestResponse(RestStatus.NOT_FOUND, "{\"error\": \"" + request.path() + " was not found.\"}")
             );
-        }
-
-    }
-
-    private void createJudgmentsIndex(final NodeClient client) throws Exception {
-
-        // If the judgments index does not exist we need to create it.
-        final IndicesExistsRequest indicesExistsRequest = new IndicesExistsRequest(JUDGMENTS_INDEX_NAME);
-
-        final IndicesExistsResponse indicesExistsResponse = client.admin().indices().exists(indicesExistsRequest).get();
-
-        if (!indicesExistsResponse.isExists()) {
-
-            // TODO: Read this mapping from a resource file instead.
-            final String mapping = "{\n"
-                + "                                                  \"properties\": {\n"
-                + "                                                    \"judgments_id\": { \"type\": \"keyword\" },\n"
-                + "                                                    \"query_id\": { \"type\": \"keyword\" },\n"
-                + "                                                    \"query\": { \"type\": \"keyword\" },\n"
-                + "                                                    \"document_id\": { \"type\": \"keyword\" },\n"
-                + "                                                    \"judgment\": { \"type\": \"double\" },\n"
-                + "                                                    \"timestamp\": { \"type\": \"date\", \"format\": \"strict_date_time\" }\n"
-                + "                                                  }\n"
-                + "                                              }";
-
-            // Create the judgments index.
-            final CreateIndexRequest createIndexRequest = new CreateIndexRequest(JUDGMENTS_INDEX_NAME).mapping(mapping);
-
-            // TODO: Don't use .get()
-            client.admin().indices().create(createIndexRequest).get();
-
         }
 
     }

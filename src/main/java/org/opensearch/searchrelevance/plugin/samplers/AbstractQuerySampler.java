@@ -7,8 +7,6 @@
  */
 package org.opensearch.searchrelevance.plugin.samplers;
 
-import static org.opensearch.searchrelevance.plugin.Constants.QUERY_SETS_INDEX_NAME;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -21,6 +19,8 @@ import org.opensearch.action.index.IndexRequest;
 import org.opensearch.action.index.IndexResponse;
 import org.opensearch.action.support.WriteRequest;
 import org.opensearch.core.action.ActionListener;
+import org.opensearch.searchrelevance.plugin.Constants;
+import org.opensearch.searchrelevance.plugin.judgments.opensearch.OpenSearchHelper;
 import org.opensearch.searchrelevance.plugin.utils.TimeUtils;
 import org.opensearch.transport.client.node.NodeClient;
 
@@ -30,6 +30,12 @@ import org.opensearch.transport.client.node.NodeClient;
 public abstract class AbstractQuerySampler {
 
     private static final Logger LOGGER = LogManager.getLogger(AbstractQuerySampler.class);
+
+    private final OpenSearchHelper openSearchHelper;
+
+    public AbstractQuerySampler(final OpenSearchHelper openSearchHelper) {
+        this.openSearchHelper = openSearchHelper;
+    }
 
     /**
      * Gets the name of the sampler.
@@ -78,8 +84,9 @@ public abstract class AbstractQuerySampler {
 
         final String querySetId = UUID.randomUUID().toString();
 
-        // TODO: Create a mapping for the query set index.
-        final IndexRequest indexRequest = new IndexRequest().index(QUERY_SETS_INDEX_NAME)
+        openSearchHelper.createIndexIfNotExists(client, Constants.QUERY_SETS_INDEX_NAME, Constants.QUERY_SETS_INDEX_MAPPING);
+
+        final IndexRequest indexRequest = new IndexRequest().index(Constants.QUERY_SETS_INDEX_NAME)
             .id(querySetId)
             .source(querySet)
             .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);

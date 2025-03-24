@@ -7,15 +7,7 @@
  */
 package org.opensearch.searchrelevance.plugin.judgments.opensearch;
 
-import static org.opensearch.searchrelevance.plugin.Constants.JUDGMENTS_INDEX_NAME;
-import static org.opensearch.searchrelevance.plugin.Constants.UBI_EVENTS_INDEX_NAME;
-import static org.opensearch.searchrelevance.plugin.Constants.UBI_QUERIES_INDEX_NAME;
-import static org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClickModel.INDEX_QUERY_DOC_CTR;
-import static org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClickModel.INDEX_RANK_AGGREGATED_CTR;
-
 import java.io.IOException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -25,6 +17,10 @@ import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.opensearch.action.admin.indices.create.CreateIndexRequest;
+import org.opensearch.action.admin.indices.create.CreateIndexResponse;
+import org.opensearch.action.admin.indices.exists.indices.IndicesExistsRequest;
+import org.opensearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.opensearch.action.bulk.BulkRequest;
 import org.opensearch.action.bulk.BulkResponse;
 import org.opensearch.action.index.IndexRequest;
@@ -35,6 +31,7 @@ import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.index.query.WrapperQueryBuilder;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.builder.SearchSourceBuilder;
+import org.opensearch.searchrelevance.plugin.Constants;
 import org.opensearch.searchrelevance.plugin.judgments.model.ClickthroughRate;
 import org.opensearch.searchrelevance.plugin.judgments.model.Judgment;
 import org.opensearch.searchrelevance.plugin.judgments.model.ubi.query.UbiQuery;
@@ -110,7 +107,7 @@ public class OpenSearchHelper {
         searchSourceBuilder.from(0);
         searchSourceBuilder.size(1);
 
-        final String[] indexes = { UBI_QUERIES_INDEX_NAME };
+        final String[] indexes = { Constants.UBI_QUERIES_INDEX_NAME };
 
         final SearchRequest searchRequest = new SearchRequest(indexes, searchSourceBuilder);
         final SearchResponse response = client.search(searchRequest).get();
@@ -119,7 +116,7 @@ public class OpenSearchHelper {
         if (response.getHits().getHits() != null & response.getHits().getHits().length > 0) {
 
             final SearchHit hit = response.getHits().getHits()[0];
-            return AccessController.doPrivileged((PrivilegedAction<UbiQuery>) () -> gson.fromJson(hit.getSourceAsString(), UbiQuery.class));
+            return gson.fromJson(hit.getSourceAsString(), UbiQuery.class);
 
         } else {
 
@@ -138,7 +135,7 @@ public class OpenSearchHelper {
         final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(qb);
 
-        final String[] indexes = { UBI_QUERIES_INDEX_NAME };
+        final String[] indexes = { Constants.UBI_QUERIES_INDEX_NAME };
 
         final SearchRequest searchRequest = new SearchRequest(indexes, searchSourceBuilder);
         final SearchResponse response = client.search(searchRequest).get();
@@ -205,7 +202,7 @@ public class OpenSearchHelper {
             searchSourceBuilder.trackTotalHits(true);
             searchSourceBuilder.size(0);
 
-            final String[] indexes = { UBI_EVENTS_INDEX_NAME };
+            final String[] indexes = { Constants.UBI_EVENTS_INDEX_NAME };
 
             final SearchRequest searchRequest = new SearchRequest(indexes, searchSourceBuilder);
             final SearchResponse response = client.search(searchRequest).get();
@@ -246,8 +243,9 @@ public class OpenSearchHelper {
                 jsonMap.put("position", position);
                 jsonMap.put("ctr", rankAggregatedClickThrough.get(position));
 
-                final IndexRequest indexRequest = new IndexRequest(INDEX_RANK_AGGREGATED_CTR).id(UUID.randomUUID().toString())
-                    .source(jsonMap);
+                final IndexRequest indexRequest = new IndexRequest(Constants.COEC_RANK_AGGREGATED_CTR_INDEX_NAME).id(
+                    UUID.randomUUID().toString()
+                ).source(jsonMap);
 
                 request.add(indexRequest);
 
@@ -281,7 +279,7 @@ public class OpenSearchHelper {
                     jsonMap.put("ctr", clickthroughRate.getClickthroughRate());
                     jsonMap.put("object_id", clickthroughRate.getObjectId());
 
-                    final IndexRequest indexRequest = new IndexRequest(INDEX_QUERY_DOC_CTR).id(UUID.randomUUID().toString())
+                    final IndexRequest indexRequest = new IndexRequest(Constants.COEC_CTR_INDEX_NAME).id(UUID.randomUUID().toString())
                         .source(jsonMap);
 
                     request.add(indexRequest);
@@ -331,7 +329,7 @@ public class OpenSearchHelper {
             j.put("judgments_id", judgmentsId);
             j.put("timestamp", timestamp);
 
-            final IndexRequest indexRequest = new IndexRequest(JUDGMENTS_INDEX_NAME).id(UUID.randomUUID().toString()).source(j);
+            final IndexRequest indexRequest = new IndexRequest(Constants.JUDGMENTS_INDEX_NAME).id(UUID.randomUUID().toString()).source(j);
 
             bulkRequest.add(indexRequest);
 
@@ -341,6 +339,46 @@ public class OpenSearchHelper {
         client.bulk(bulkRequest).get();
 
         return judgmentsId;
+
+    }
+
+    public void createIndexIfNotExists(final Client client, final String indexName, final String indexMapping) throws Exception {
+
+        final IndicesExistsRequest indicesExistsRequest = new IndicesExistsRequest(indexName);
+
+        client.admin().indices().exists(indicesExistsRequest, new ActionListener<>() {
+
+            @Override
+            public void onResponse(IndicesExistsResponse indicesExistsResponse) {
+
+                if (!indicesExistsResponse.isExists()) {
+
+                    final CreateIndexRequest createIndexRequest = new CreateIndexRequest(indexName).mapping(indexMapping);
+
+                    client.admin().indices().create(createIndexRequest, new ActionListener<>() {
+
+                        @Override
+                        public void onResponse(CreateIndexResponse createIndexResponse) {
+                            LOGGER.info("{} index created.", indexName);
+                        }
+
+                        @Override
+                        public void onFailure(Exception ex) {
+                            LOGGER.error("Unable to create the {} index.", indexName, ex);
+                        }
+
+                    });
+
+                }
+
+            }
+
+            @Override
+            public void onFailure(Exception ex) {
+                LOGGER.error("Unable to determine if {} index exists.", indexName, ex);
+            }
+
+        });
 
     }
 

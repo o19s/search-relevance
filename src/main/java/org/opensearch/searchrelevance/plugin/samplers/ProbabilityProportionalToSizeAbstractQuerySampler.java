@@ -24,6 +24,7 @@ import org.opensearch.action.search.SearchScrollRequest;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.builder.SearchSourceBuilder;
+import org.opensearch.searchrelevance.plugin.judgments.opensearch.OpenSearchHelper;
 import org.opensearch.transport.client.node.NodeClient;
 
 /**
@@ -46,9 +47,11 @@ public class ProbabilityProportionalToSizeAbstractQuerySampler extends AbstractQ
      * @param parameters The {@link ProbabilityProportionalToSizeParameters parameters} for the sampling.
      */
     public ProbabilityProportionalToSizeAbstractQuerySampler(
+        final OpenSearchHelper openSearchHelper,
         final NodeClient client,
         final ProbabilityProportionalToSizeParameters parameters
     ) {
+        super(openSearchHelper);
         this.client = client;
         this.parameters = parameters;
     }

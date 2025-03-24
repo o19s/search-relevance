@@ -17,6 +17,7 @@ import org.opensearch.action.search.SearchResponse;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.builder.SearchSourceBuilder;
+import org.opensearch.searchrelevance.plugin.judgments.opensearch.OpenSearchHelper;
 import org.opensearch.transport.client.node.NodeClient;
 
 /**
@@ -33,7 +34,12 @@ public class AllQueriesQuerySampler extends AbstractQuerySampler {
      * Creates a new sampler.
      * @param client The OpenSearch {@link NodeClient client}.
      */
-    public AllQueriesQuerySampler(final NodeClient client, final AllQueriesQuerySamplerParameters parameters) {
+    public AllQueriesQuerySampler(
+        final OpenSearchHelper openSearchHelper,
+        final NodeClient client,
+        final AllQueriesQuerySamplerParameters parameters
+    ) {
+        super(openSearchHelper);
         this.client = client;
         this.parameters = parameters;
     }

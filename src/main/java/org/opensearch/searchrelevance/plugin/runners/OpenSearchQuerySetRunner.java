@@ -7,7 +7,6 @@
  */
 package org.opensearch.searchrelevance.plugin.runners;
 
-import static org.opensearch.searchrelevance.plugin.Constants.DASHBOARD_METRICS_INDEX_NAME;
 import static org.opensearch.searchrelevance.plugin.Constants.QUERY_PLACEHOLDER;
 
 import java.util.ArrayList;
@@ -19,10 +18,6 @@ import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.opensearch.action.admin.indices.create.CreateIndexRequest;
-import org.opensearch.action.admin.indices.create.CreateIndexResponse;
-import org.opensearch.action.admin.indices.exists.indices.IndicesExistsRequest;
-import org.opensearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.opensearch.action.bulk.BulkRequest;
 import org.opensearch.action.bulk.BulkResponse;
 import org.opensearch.action.index.IndexRequest;
@@ -32,6 +27,8 @@ import org.opensearch.core.action.ActionListener;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.builder.SearchSourceBuilder;
+import org.opensearch.searchrelevance.plugin.Constants;
+import org.opensearch.searchrelevance.plugin.judgments.opensearch.OpenSearchHelper;
 import org.opensearch.searchrelevance.plugin.metrics.DcgSearchMetric;
 import org.opensearch.searchrelevance.plugin.metrics.NdcgSearchMetric;
 import org.opensearch.searchrelevance.plugin.metrics.PrecisionSearchMetric;
@@ -46,13 +43,16 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
 
     private static final Logger LOGGER = LogManager.getLogger(OpenSearchQuerySetRunner.class);
 
+    private final OpenSearchHelper openSearchHelper;
+
     /**
      * Creates a new query set runner
      *
      * @param client An OpenSearch {@link Client}.
      */
-    public OpenSearchQuerySetRunner(final Client client) {
+    public OpenSearchQuerySetRunner(final Client client, final OpenSearchHelper openSearchHelper) {
         super(client);
+        this.openSearchHelper = openSearchHelper;
     }
 
     @Override
@@ -213,58 +213,7 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
         // See https://github.com/o19s/opensearch-search-quality-evaluation/blob/main/opensearch-dashboard-prototyping/METRICS_SCHEMA.md
         // See https://github.com/o19s/opensearch-search-quality-evaluation/blob/main/opensearch-dashboard-prototyping/sample_data.ndjson
 
-        final IndicesExistsRequest indicesExistsRequest = new IndicesExistsRequest(DASHBOARD_METRICS_INDEX_NAME);
-
-        client.admin().indices().exists(indicesExistsRequest, new ActionListener<>() {
-
-            @Override
-            public void onResponse(IndicesExistsResponse indicesExistsResponse) {
-
-                if (!indicesExistsResponse.isExists()) {
-
-                    // Create the index.
-                    // TODO: Read this mapping from a resource file instead.
-                    final String mapping = "{\n"
-                        + "              \"properties\": {\n"
-                        + "                \"datetime\": { \"type\": \"date\", \"format\": \"strict_date_time\" },\n"
-                        + "                \"search_config\": { \"type\": \"keyword\" },\n"
-                        + "                \"query_set_id\": { \"type\": \"keyword\" },\n"
-                        + "                \"query\": { \"type\": \"keyword\" },\n"
-                        + "                \"metric\": { \"type\": \"keyword\" },\n"
-                        + "                \"value\": { \"type\": \"double\" },\n"
-                        + "                \"application\": { \"type\": \"keyword\" },\n"
-                        + "                \"evaluation_id\": { \"type\": \"keyword\" },\n"
-                        + "                \"frogs_percent\": { \"type\": \"double\" }\n"
-                        + "              }\n"
-                        + "          }";
-
-                    // Create the judgments index.
-                    final CreateIndexRequest createIndexRequest = new CreateIndexRequest(DASHBOARD_METRICS_INDEX_NAME).mapping(mapping);
-
-                    client.admin().indices().create(createIndexRequest, new ActionListener<>() {
-
-                        @Override
-                        public void onResponse(CreateIndexResponse createIndexResponse) {
-                            LOGGER.info("{} index created.", DASHBOARD_METRICS_INDEX_NAME);
-                        }
-
-                        @Override
-                        public void onFailure(Exception ex) {
-                            LOGGER.error("Unable to create the {} index.", DASHBOARD_METRICS_INDEX_NAME, ex);
-                        }
-
-                    });
-
-                }
-
-            }
-
-            @Override
-            public void onFailure(Exception ex) {
-                LOGGER.error("Unable to determine if {} index exists.", DASHBOARD_METRICS_INDEX_NAME, ex);
-            }
-
-        });
+        openSearchHelper.createIndexIfNotExists(client, Constants.METRICS_INDEX_NAME, Constants.METRICS_INDEX_MAPPING);
 
         final BulkRequest bulkRequest = new BulkRequest();
         final String timestamp = TimeUtils.getTimestamp();

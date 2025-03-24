@@ -7,8 +7,6 @@
  */
 package org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec;
 
-import static org.opensearch.searchrelevance.plugin.Constants.UBI_EVENTS_INDEX_NAME;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -34,6 +32,7 @@ import org.opensearch.search.aggregations.BucketOrder;
 import org.opensearch.search.aggregations.bucket.terms.Terms;
 import org.opensearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.opensearch.search.builder.SearchSourceBuilder;
+import org.opensearch.searchrelevance.plugin.Constants;
 import org.opensearch.searchrelevance.plugin.judgments.clickmodel.ClickModel;
 import org.opensearch.searchrelevance.plugin.judgments.model.ClickthroughRate;
 import org.opensearch.searchrelevance.plugin.judgments.model.Judgment;
@@ -49,10 +48,6 @@ import com.google.gson.Gson;
 public class CoecClickModel extends ClickModel {
 
     public static final String CLICK_MODEL_NAME = "coec";
-
-    // OpenSearch indexes for COEC data.
-    public static final String INDEX_RANK_AGGREGATED_CTR = "rank_aggregated_ctr";
-    public static final String INDEX_QUERY_DOC_CTR = "click_through_rates";
 
     // UBI event names.
     public static final String EVENT_CLICK = "click";
@@ -223,7 +218,9 @@ public class CoecClickModel extends ClickModel {
         final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().query(queryBuilder).size(1000);
         final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(10L));
 
-        final SearchRequest searchRequest = Requests.searchRequest(UBI_EVENTS_INDEX_NAME).source(searchSourceBuilder).scroll(scroll);
+        final SearchRequest searchRequest = Requests.searchRequest(Constants.UBI_EVENTS_INDEX_NAME)
+            .source(searchSourceBuilder)
+            .scroll(scroll);
 
         // TODO Don't use .get()
         SearchResponse searchResponse = client.search(searchRequest).get();
@@ -294,6 +291,7 @@ public class CoecClickModel extends ClickModel {
 
         }
 
+        openSearchHelper.createIndexIfNotExists(client, Constants.COEC_CTR_INDEX_NAME, Constants.COEC_CTR_INDEX_MAPPING);
         openSearchHelper.indexClickthroughRates(queriesToClickthroughRates);
 
         return queriesToClickthroughRates;
@@ -321,6 +319,7 @@ public class CoecClickModel extends ClickModel {
             .field("event_attributes.position.ordinal")
             .order(bucketOrder)
             .size(parameters.getMaxRank());
+
         final TermsAggregationBuilder actionNameAggregation = AggregationBuilders.terms("By_Action")
             .field("action_name")
             .subAggregation(positionsAggregator)
@@ -332,7 +331,7 @@ public class CoecClickModel extends ClickModel {
             .from(0)
             .size(0);
 
-        final SearchRequest searchRequest = new SearchRequest(UBI_EVENTS_INDEX_NAME).source(searchSourceBuilder);
+        final SearchRequest searchRequest = new SearchRequest(Constants.UBI_EVENTS_INDEX_NAME).source(searchSourceBuilder);
         final SearchResponse searchResponse = client.search(searchRequest).get();
 
         final Map<Integer, Double> clickCounts = new HashMap<>();
