@@ -14,12 +14,13 @@ apply from: 'formatter/formatting.gradle'
 apply plugin: 'jacoco'
 apply plugin: 'com.form.diff-coverage'
 
-def pluginName = 'search-relevance'
+def pluginName = 'opensearch-search-relevance'
 def pluginDescription = 'Custom plugin'
 def packagePath = 'org.opensearch'
 def pathToPlugin = 'searchrelevance.plugin'
 def pluginClassName = 'SearchRelevancePlugin'
 group = "org.opensearch.searchrelevance"
+version = "3.0.0.0"
 
 java {
     targetCompatibility = JavaVersion.VERSION_21
@@ -93,7 +94,7 @@ buildscript {
     dependencies {
         classpath "org.opensearch.gradle:build-tools:${opensearch_version}"
         classpath "com.diffplug.spotless:spotless-plugin-gradle:7.0.2"
-        classpath "com.github.form-com.diff-coverage-gradle:diff-coverage:0.9.4"
+        classpath "com.github.form-com.diff-coverage-gradle:diff-coverage:0.9.5"
     }
 }
 
@@ -104,7 +105,7 @@ dependencies {
     compileOnly "org.apache.httpcomponents:httpcore:${versions.httpcore}"
     compileOnly "org.apache.httpcomponents:httpclient:${versions.httpclient}"
     compileOnly "commons-logging:commons-logging:${versions.commonslogging}"
-    implementation "com.google.code.gson:gson:2.11.0"
+    implementation "com.google.code.gson:gson:2.12.1"
     yamlRestTestImplementation "org.apache.logging.log4j:log4j-core:${versions.log4j}"
 }
 
