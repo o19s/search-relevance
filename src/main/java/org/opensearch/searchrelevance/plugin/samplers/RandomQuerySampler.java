@@ -8,6 +8,8 @@
 package org.opensearch.searchrelevance.plugin.samplers;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,6 +23,7 @@ import org.opensearch.index.query.TermQueryBuilder;
 import org.opensearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.opensearch.index.query.functionscore.RandomScoreFunctionBuilder;
 import org.opensearch.index.query.functionscore.ScoreFunctionBuilders;
+import org.opensearch.search.SearchHit;
 import org.opensearch.search.builder.SearchSourceBuilder;
 import org.opensearch.search.collapse.CollapseBuilder;
 import org.opensearch.searchrelevance.plugin.Constants;
@@ -50,11 +53,11 @@ public class RandomQuerySampler extends AbstractQuerySampler {
     @Override
     public String sample() throws IOException {
 
-        final String USER_QUERY_FIELD = "user_query";
+        final String userQueryField = "user_query";
 
         final long seed = System.currentTimeMillis();
 
-        final RandomScoreFunctionBuilder randomScoreFunction = ScoreFunctionBuilders.randomFunction().seed(seed);
+        final RandomScoreFunctionBuilder randomScoreFunction = ScoreFunctionBuilders.randomFunction(); // .setField(userQueryField).seed(seed);
 
         final FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(
             QueryBuilders.matchAllQuery(),
@@ -62,8 +65,8 @@ public class RandomQuerySampler extends AbstractQuerySampler {
                 new FunctionScoreQueryBuilder.FilterFunctionBuilder(randomScoreFunction) }
         );
 
-        final ExistsQueryBuilder existsQueryBuilder = QueryBuilders.existsQuery(USER_QUERY_FIELD);
-        final TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery(USER_QUERY_FIELD, "");
+        final ExistsQueryBuilder existsQueryBuilder = QueryBuilders.existsQuery(userQueryField);
+        final TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery(userQueryField, "");
 
         final BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
             .must(existsQueryBuilder)
@@ -71,7 +74,7 @@ public class RandomQuerySampler extends AbstractQuerySampler {
             .mustNot(termQueryBuilder);
 
         final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder().query(boolQueryBuilder)
-            .collapse(new CollapseBuilder(USER_QUERY_FIELD))
+            .collapse(new CollapseBuilder(userQueryField))
             .size(parameters.getQuerySetSize());
 
         final SearchRequest searchRequest = new SearchRequest(Constants.UBI_QUERIES_INDEX_NAME).source(searchSourceBuilder);
@@ -81,24 +84,35 @@ public class RandomQuerySampler extends AbstractQuerySampler {
             @Override
             public void onResponse(SearchResponse searchResponse) {
 
-                LOGGER.info("Total hits: " + searchResponse.getHits().getTotalHits().value());
-                // Process searchResponse.getHits() here.
+                final Map<String, Long> querySet = new HashMap<>();
 
-                // TODO: These are UBI queries.
+                // These are UBI queries.
+                for (SearchHit hit : searchResponse.getHits().getHits()) {
 
-                // final Map<String, Long> querySet = new HashMap<>();
-                //
-                // searchResponse.hits().hits().forEach(hit -> {
-                // final long count = getUserQueryCount(hit.source().getUserQuery());
-                // LOGGER.info("Adding user query to query set: {} with frequency {}", hit.source().getUserQuery(), count);
-                // querySet.put(hit.source().getUserQuery(), count);
-                // });
+                    final Map<String, Object> sourceAsMap = hit.getSourceAsMap();
+                    LOGGER.info("Hit ID: " + hit.getId());
+                    LOGGER.info("Hit Score: " + hit.getScore());
+                    LOGGER.info("Hit Source: " + sourceAsMap);
+
+                    // Access individual properties from sourceAsMap
+                    final String userQuery = (String) sourceAsMap.get(userQueryField);
+
+                    if (userQuery != null) {
+                        LOGGER.info("\t User Query: " + userQuery);
+                    }
+
+                    // TODO: Form the query set.
+                    // final long count = getUserQueryCount(hit.source().getUserQuery());
+                    // LOGGER.info("Adding user query to query set: {} with frequency {}", hit.source().getUserQuery(), count);
+                    // querySet.put(hit.source().getUserQuery(), count);
+
+                }
 
             }
 
             @Override
-            public void onFailure(Exception e) {
-                LOGGER.error("Error executing search request: " + e.getMessage());
+            public void onFailure(Exception ex) {
+                LOGGER.error("Error executing search request: " + ex.getMessage(), ex);
             }
 
         });
