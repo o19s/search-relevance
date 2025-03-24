@@ -26,10 +26,12 @@ import org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClick
 import org.opensearch.searchrelevance.plugin.judgments.opensearch.OpenSearchHelper;
 import org.opensearch.searchrelevance.plugin.runners.OpenSearchQuerySetRunner;
 import org.opensearch.searchrelevance.plugin.runners.QuerySetRunResult;
+import org.opensearch.searchrelevance.plugin.samplers.AllQueriesQueryQuerySamplerParameters;
 import org.opensearch.searchrelevance.plugin.samplers.AllQueriesQuerySampler;
-import org.opensearch.searchrelevance.plugin.samplers.AllQueriesQuerySamplerParameters;
-import org.opensearch.searchrelevance.plugin.samplers.ProbabilityProportionalToSizeAbstractQuerySampler;
-import org.opensearch.searchrelevance.plugin.samplers.ProbabilityProportionalToSizeParameters;
+import org.opensearch.searchrelevance.plugin.samplers.ProbabilityProportionalToSizeQuerySampler;
+import org.opensearch.searchrelevance.plugin.samplers.ProbabilityProportionalToSizeQuerySamplerParameters;
+import org.opensearch.searchrelevance.plugin.samplers.RandomQuerySampler;
+import org.opensearch.searchrelevance.plugin.samplers.RandomQuerySamplerParameters;
 import org.opensearch.transport.client.node.NodeClient;
 
 public class SearchRelevanceRestHandler extends BaseRestHandler {
@@ -78,7 +80,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
 
                     try {
 
-                        final AllQueriesQuerySamplerParameters parameters = new AllQueriesQuerySamplerParameters(
+                        final AllQueriesQueryQuerySamplerParameters parameters = new AllQueriesQueryQuerySamplerParameters(
                             name,
                             description,
                             sampling,
@@ -100,21 +102,45 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                     }
 
                     // Create a query set by using PPTSS sampling.
-                } else if (ProbabilityProportionalToSizeAbstractQuerySampler.NAME.equalsIgnoreCase(sampling)) {
+                } else if (ProbabilityProportionalToSizeQuerySampler.NAME.equalsIgnoreCase(sampling)) {
 
                     LOGGER.info("Creating query set using PPTSS");
 
-                    final ProbabilityProportionalToSizeParameters parameters = new ProbabilityProportionalToSizeParameters(
+                    final ProbabilityProportionalToSizeQuerySamplerParameters parameters =
+                        new ProbabilityProportionalToSizeQuerySamplerParameters(name, description, sampling, querySetSize);
+                    final ProbabilityProportionalToSizeQuerySampler sampler = new ProbabilityProportionalToSizeQuerySampler(
+                        openSearchHelper,
+                        client,
+                        parameters
+                    );
+
+                    try {
+
+                        // Sample and index the queries.
+                        final String querySetId = sampler.sample();
+
+                        return restChannel -> restChannel.sendResponse(
+                            new BytesRestResponse(RestStatus.OK, "{\"query_set\": \"" + querySetId + "\"}")
+                        );
+
+                    } catch (Exception ex) {
+                        return restChannel -> restChannel.sendResponse(
+                            new BytesRestResponse(RestStatus.INTERNAL_SERVER_ERROR, "{\"error\": \"" + ex.getMessage() + "\"}")
+                        );
+                    }
+
+                } else if (RandomQuerySampler.NAME.equalsIgnoreCase(sampling)) {
+
+                    LOGGER.info("Creating query set using random sampling.");
+
+                    final RandomQuerySamplerParameters parameters = new RandomQuerySamplerParameters(
                         name,
                         description,
                         sampling,
                         querySetSize
                     );
-                    final ProbabilityProportionalToSizeAbstractQuerySampler sampler = new ProbabilityProportionalToSizeAbstractQuerySampler(
-                        openSearchHelper,
-                        client,
-                        parameters
-                    );
+
+                    final RandomQuerySampler sampler = new RandomQuerySampler(openSearchHelper, parameters);
 
                     try {
 

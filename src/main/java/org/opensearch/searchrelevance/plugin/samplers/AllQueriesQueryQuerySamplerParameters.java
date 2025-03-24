@@ -7,15 +7,17 @@
  */
 package org.opensearch.searchrelevance.plugin.samplers;
 
-public class ProbabilityProportionalToSizeParameters extends AbstractSamplerParameters {
+public class AllQueriesQueryQuerySamplerParameters extends AbstractQuerySamplerParameters {
 
-    public ProbabilityProportionalToSizeParameters(
+    public static final String SAMPLER = "all";
+
+    public AllQueriesQueryQuerySamplerParameters(
         final String name,
         final String description,
         final String sampling,
         final int querySetSize
     ) {
-        super(name, description, sampling, querySetSize);
+        super(SAMPLER, name, description, sampling, querySetSize);
     }
 
 }

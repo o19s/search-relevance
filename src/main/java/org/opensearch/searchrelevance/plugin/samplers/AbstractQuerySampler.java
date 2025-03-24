@@ -31,7 +31,7 @@ public abstract class AbstractQuerySampler {
 
     private static final Logger LOGGER = LogManager.getLogger(AbstractQuerySampler.class);
 
-    private final OpenSearchHelper openSearchHelper;
+    protected final OpenSearchHelper openSearchHelper;
 
     public AbstractQuerySampler(final OpenSearchHelper openSearchHelper) {
         this.openSearchHelper = openSearchHelper;

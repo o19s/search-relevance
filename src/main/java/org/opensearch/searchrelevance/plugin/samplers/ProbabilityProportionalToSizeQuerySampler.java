@@ -32,24 +32,24 @@ import org.opensearch.transport.client.node.NodeClient;
  * See https://opensourceconnections.com/blog/2022/10/13/how-to-succeed-with-explicit-relevance-evaluation-using-probability-proportional-to-size-sampling/
  * for more information on PPTSS.
  */
-public class ProbabilityProportionalToSizeAbstractQuerySampler extends AbstractQuerySampler {
+public class ProbabilityProportionalToSizeQuerySampler extends AbstractQuerySampler {
 
     public static final String NAME = "pptss";
 
-    private static final Logger LOGGER = LogManager.getLogger(ProbabilityProportionalToSizeAbstractQuerySampler.class);
+    private static final Logger LOGGER = LogManager.getLogger(ProbabilityProportionalToSizeQuerySampler.class);
 
     private final NodeClient client;
-    private final ProbabilityProportionalToSizeParameters parameters;
+    private final ProbabilityProportionalToSizeQuerySamplerParameters parameters;
 
     /**
      * Creates a new PPTSS sampler.
      * @param client The OpenSearch {@link NodeClient client}.
-     * @param parameters The {@link ProbabilityProportionalToSizeParameters parameters} for the sampling.
+     * @param parameters The {@link ProbabilityProportionalToSizeQuerySamplerParameters parameters} for the sampling.
      */
-    public ProbabilityProportionalToSizeAbstractQuerySampler(
+    public ProbabilityProportionalToSizeQuerySampler(
         final OpenSearchHelper openSearchHelper,
         final NodeClient client,
-        final ProbabilityProportionalToSizeParameters parameters
+        final ProbabilityProportionalToSizeQuerySamplerParameters parameters
     ) {
         super(openSearchHelper);
         this.client = client;

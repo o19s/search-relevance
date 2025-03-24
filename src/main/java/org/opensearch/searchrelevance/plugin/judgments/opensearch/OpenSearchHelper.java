@@ -58,6 +58,10 @@ public class OpenSearchHelper {
         this.client = client;
     }
 
+    public Client getClient() {
+        return client;
+    }
+
     /**
      * Gets the user query for a given query ID.
      * @param queryId The query ID.

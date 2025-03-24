@@ -28,7 +28,7 @@ public class AllQueriesQuerySampler extends AbstractQuerySampler {
     public static final String NAME = "none";
 
     private final NodeClient client;
-    private final AllQueriesQuerySamplerParameters parameters;
+    private final AllQueriesQueryQuerySamplerParameters parameters;
 
     /**
      * Creates a new sampler.
@@ -37,7 +37,7 @@ public class AllQueriesQuerySampler extends AbstractQuerySampler {
     public AllQueriesQuerySampler(
         final OpenSearchHelper openSearchHelper,
         final NodeClient client,
-        final AllQueriesQuerySamplerParameters parameters
+        final AllQueriesQueryQuerySamplerParameters parameters
     ) {
         super(openSearchHelper);
         this.client = client;
