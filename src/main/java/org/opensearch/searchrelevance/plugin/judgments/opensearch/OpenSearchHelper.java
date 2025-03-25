@@ -37,6 +37,7 @@ import org.opensearch.search.builder.SearchSourceBuilder;
 import org.opensearch.searchrelevance.plugin.Constants;
 import org.opensearch.searchrelevance.plugin.judgments.model.ClickthroughRate;
 import org.opensearch.searchrelevance.plugin.judgments.model.Judgment;
+import org.opensearch.searchrelevance.plugin.judgments.model.SearchConfiguration;
 import org.opensearch.searchrelevance.plugin.judgments.model.ubi.query.UbiQuery;
 import org.opensearch.searchrelevance.plugin.utils.TimeUtils;
 import org.opensearch.transport.client.Client;
@@ -405,6 +406,22 @@ public class OpenSearchHelper {
         final SearchHits hits = searchResponse.getHits();
 
         return hits.getTotalHits().value();
+
+    }
+
+    public String indexSearchConfiguration(final SearchConfiguration searchConfiguration) {
+
+        final String searchConfigurationId = UUID.randomUUID().toString();
+
+        final Map<String, Object> jsonMap = new HashMap<>();
+        jsonMap.put("search_configuration_name", searchConfiguration.getSearchConfigurationName());
+        jsonMap.put("query_body", searchConfiguration.getQueryBody());
+
+        final IndexRequest indexRequest = new IndexRequest(Constants.SEARCH_CONFIG_INDEX_NAME).id(searchConfigurationId).source(jsonMap);
+
+        client.index(indexRequest).actionGet();
+
+        return searchConfigurationId;
 
     }
 

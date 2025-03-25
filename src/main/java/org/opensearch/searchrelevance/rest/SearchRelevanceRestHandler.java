@@ -11,8 +11,9 @@ import static org.opensearch.searchrelevance.plugin.Constants.QUERY_PLACEHOLDER;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.List;
-import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,6 +25,7 @@ import org.opensearch.rest.RestRequest;
 import org.opensearch.searchrelevance.plugin.Constants;
 import org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClickModel;
 import org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClickModelParameters;
+import org.opensearch.searchrelevance.plugin.judgments.model.SearchConfiguration;
 import org.opensearch.searchrelevance.plugin.judgments.opensearch.OpenSearchHelper;
 import org.opensearch.searchrelevance.plugin.runners.OpenSearchQuerySetRunner;
 import org.opensearch.searchrelevance.plugin.runners.QuerySetRunResult;
@@ -35,14 +37,19 @@ import org.opensearch.searchrelevance.plugin.samplers.TopNQuerySampler;
 import org.opensearch.searchrelevance.plugin.samplers.TopNQuerySamplerParameters;
 import org.opensearch.transport.client.node.NodeClient;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public class SearchRelevanceRestHandler extends BaseRestHandler {
 
     private static final Logger LOGGER = LogManager.getLogger(SearchRelevanceRestHandler.class);
 
-    private static final String JUDGMENTS = "/_plugins/search_relevance/judgments";
-    private static final String QUERYSETS_MANAGEMENT_URL = "/_plugins/search_relevance/query_sets";
+    private static final String JUDGMENTS_URL = "/_plugins/search_relevance/judgments";
+    private static final String QUERYSETS_URL = "/_plugins/search_relevance/query_sets";
     private static final String EXPERIMENTS_URL = "/_plugins/search_relevance/experiments";
-    private static final String SEARCH_CONFIGS_URL = "/_plugins/search_relevance/search_configs";
+    private static final String SEARCH_CONFIGS_URL = "/_plugins/search_relevance/search_configurations";
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public String getName() {
@@ -52,8 +59,8 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
     @Override
     public List<Route> routes() {
         return List.of(
-            new Route(RestRequest.Method.POST, JUDGMENTS),
-            new Route(RestRequest.Method.POST, QUERYSETS_MANAGEMENT_URL),
+            new Route(RestRequest.Method.POST, JUDGMENTS_URL),
+            new Route(RestRequest.Method.POST, QUERYSETS_URL),
             new Route(RestRequest.Method.POST, EXPERIMENTS_URL),
             new Route(RestRequest.Method.POST, SEARCH_CONFIGS_URL)
         );
@@ -69,18 +76,23 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
             // Create a new search config.
             if (request.method().equals(RestRequest.Method.POST)) {
 
-                final String searchConfigId = UUID.randomUUID().toString();
-                final String name = request.param("name");
-                final String searchPipeline = request.param("search_pipeline");
+                final String requestBody = request.content().utf8ToString();
 
-                // TODO: Read the query from the post body.
-                // request.content()
+                final SearchConfiguration searchConfiguration = AccessController.doPrivileged(
+                    (PrivilegedAction<SearchConfiguration>) () -> {
+                        try {
+                            return objectMapper.readValue(requestBody, SearchConfiguration.class);
+                        } catch (JsonProcessingException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                );
 
-                // TODO: Index the search config.
-                // openSearchHelper.createIndexIfNotExists(Constants.SEARCH_CONFIG_INDEX_NAME, Constants.SEARCH_CONFIG_INDEX_MAPPING);
+                openSearchHelper.createIndexIfNotExists(Constants.SEARCH_CONFIG_INDEX_NAME, Constants.SEARCH_CONFIG_INDEX_MAPPING);
+                final String searchConfigurationId = openSearchHelper.indexSearchConfiguration(searchConfiguration);
 
                 return restChannel -> restChannel.sendResponse(
-                    new BytesRestResponse(RestStatus.OK, "{\"search_config\": \"" + searchConfigId + "\"}")
+                    new BytesRestResponse(RestStatus.OK, "{\"search_config\": \"" + searchConfigurationId + "\"}")
                 );
 
             } else {
@@ -90,7 +102,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                 );
             }
 
-        } else if (QUERYSETS_MANAGEMENT_URL.equalsIgnoreCase(request.path())) {
+        } else if (QUERYSETS_URL.equalsIgnoreCase(request.path())) {
 
             // Creating a new query set by sampling the UBI queries.
             if (request.method().equals(RestRequest.Method.POST)) {
@@ -261,7 +273,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
             );
 
             // Handle the on-demand creation of implicit judgments.
-        } else if (JUDGMENTS.equalsIgnoreCase(request.path())) {
+        } else if (JUDGMENTS_URL.equalsIgnoreCase(request.path())) {
 
             if (request.method().equals(RestRequest.Method.POST)) {
 

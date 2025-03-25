@@ -100,8 +100,8 @@ buildscript {
 
 dependencies {
     runtimeOnly "org.apache.logging.log4j:log4j-core:${versions.log4j}"
-    compileOnly "com.fasterxml.jackson.core:jackson-annotations:${versions.jackson}"
-    compileOnly "com.fasterxml.jackson.core:jackson-databind:${versions.jackson_databind}"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:${versions.jackson}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${versions.jackson_databind}"
     compileOnly "org.apache.httpcomponents:httpcore:${versions.httpcore}"
     compileOnly "org.apache.httpcomponents:httpclient:${versions.httpclient}"
     compileOnly "commons-logging:commons-logging:${versions.commonslogging}"
