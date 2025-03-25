@@ -12,6 +12,7 @@ import static org.opensearch.searchrelevance.plugin.Constants.QUERY_PLACEHOLDER;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,9 +39,10 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
 
     private static final Logger LOGGER = LogManager.getLogger(SearchRelevanceRestHandler.class);
 
-    private static final String IMPLICIT_JUDGMENTS_URL = "/_plugins/search_relevance/judgments";
-    private static final String QUERYSET_MANAGEMENT_URL = "/_plugins/search_relevance/queryset";
-    private static final String QUERYSET_RUN_URL = "/_plugins/search_relevance/experiments";
+    private static final String JUDGMENTS = "/_plugins/search_relevance/judgments";
+    private static final String QUERYSETS_MANAGEMENT_URL = "/_plugins/search_relevance/query_sets";
+    private static final String EXPERIMENTS_URL = "/_plugins/search_relevance/experiments";
+    private static final String SEARCH_CONFIGS_URL = "/_plugins/search_relevance/search_configs";
 
     @Override
     public String getName() {
@@ -50,9 +52,10 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
     @Override
     public List<Route> routes() {
         return List.of(
-            new Route(RestRequest.Method.POST, IMPLICIT_JUDGMENTS_URL),
-            new Route(RestRequest.Method.POST, QUERYSET_MANAGEMENT_URL),
-            new Route(RestRequest.Method.POST, QUERYSET_RUN_URL)
+            new Route(RestRequest.Method.POST, JUDGMENTS),
+            new Route(RestRequest.Method.POST, QUERYSETS_MANAGEMENT_URL),
+            new Route(RestRequest.Method.POST, EXPERIMENTS_URL),
+            new Route(RestRequest.Method.POST, SEARCH_CONFIGS_URL)
         );
     }
 
@@ -61,8 +64,33 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
 
         final OpenSearchHelper openSearchHelper = new OpenSearchHelper(client);
 
-        // Handle managing query sets.
-        if (QUERYSET_MANAGEMENT_URL.equalsIgnoreCase(request.path())) {
+        if (SEARCH_CONFIGS_URL.equals(request.path())) {
+
+            // Create a new search config.
+            if (request.method().equals(RestRequest.Method.POST)) {
+
+                final String searchConfigId = UUID.randomUUID().toString();
+                final String name = request.param("name");
+                final String searchPipeline = request.param("search_pipeline");
+
+                // TODO: Read the query from the post body.
+                // request.content()
+
+                // TODO: Index the search config.
+                // openSearchHelper.createIndexIfNotExists(Constants.SEARCH_CONFIG_INDEX_NAME, Constants.SEARCH_CONFIG_INDEX_MAPPING);
+
+                return restChannel -> restChannel.sendResponse(
+                    new BytesRestResponse(RestStatus.OK, "{\"search_config\": \"" + searchConfigId + "\"}")
+                );
+
+            } else {
+                // Invalid HTTP method for this endpoint.
+                return restChannel -> restChannel.sendResponse(
+                    new BytesRestResponse(RestStatus.METHOD_NOT_ALLOWED, "{\"error\": \"" + request.method() + " is not allowed.\"}")
+                );
+            }
+
+        } else if (QUERYSETS_MANAGEMENT_URL.equalsIgnoreCase(request.path())) {
 
             // Creating a new query set by sampling the UBI queries.
             if (request.method().equals(RestRequest.Method.POST)) {
@@ -165,8 +193,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                 );
             }
 
-            // Handle running query sets.
-        } else if (QUERYSET_RUN_URL.equalsIgnoreCase(request.path())) {
+        } else if (EXPERIMENTS_URL.equalsIgnoreCase(request.path())) {
 
             final String querySetId = request.param("id");
             final String judgmentsId = request.param("judgments_id");
@@ -234,7 +261,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
             );
 
             // Handle the on-demand creation of implicit judgments.
-        } else if (IMPLICIT_JUDGMENTS_URL.equalsIgnoreCase(request.path())) {
+        } else if (JUDGMENTS.equalsIgnoreCase(request.path())) {
 
             if (request.method().equals(RestRequest.Method.POST)) {
 

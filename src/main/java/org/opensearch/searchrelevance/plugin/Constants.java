@@ -105,6 +105,29 @@ public class Constants {
                   }""";
 
     /**
+     * The name of the index that stores the metrics for the dashboard.
+     */
+    public final static String METRICS_INDEX_NAME = "srw_metrics";
+
+    /**
+     * The query results index mapping.
+     */
+    public static final String METRICS_INDEX_MAPPING = """
+        {
+                      "properties": {
+                        "timestamp": { "type": "date", "format": "strict_date_time" },
+                        "search_config": { "type": "keyword" },
+                        "query_set_id": { "type": "keyword" },
+                        "user_query": { "type": "keyword" },
+                        "metric": { "type": "keyword" },
+                        "value": { "type": "double" },
+                        "application": { "type": "keyword" },
+                        "evaluation_id": { "type": "keyword" },
+                        "frogs_percent": { "type": "double" }
+                      }
+                  }""";
+
+    /**
      * THe name of the index that stores the results from each query in a query set run.
      */
     public static final String QUERY_RESULTS_INDEX_NAME = "srw_query_results";
@@ -126,25 +149,20 @@ public class Constants {
                   }""";
 
     /**
-     * The name of the index that stores the metrics for the dashboard.
+     * The name of the index that stores the search configurations.
      */
-    public final static String METRICS_INDEX_NAME = "srw_metrics";
+    public final static String SEARCH_CONFIG_INDEX_NAME = "srw_search_configurations";
 
     /**
      * The query results index mapping.
      */
-    public static final String METRICS_INDEX_MAPPING = """
+    public static final String SEARCH_CONFIG_INDEX_MAPPING = """
         {
                       "properties": {
-                        "timestamp": { "type": "date", "format": "strict_date_time" },
-                        "search_config": { "type": "keyword" },
-                        "query_set_id": { "type": "keyword" },
-                        "user_query": { "type": "keyword" },
-                        "metric": { "type": "keyword" },
-                        "value": { "type": "double" },
-                        "application": { "type": "keyword" },
-                        "evaluation_id": { "type": "keyword" },
-                        "frogs_percent": { "type": "double" }
+                        "id": { "type": "keyword" },
+                        "name": { "type": "keyword" },
+                        "query": { "type": "object" },
+                        "search_pipeline": { "type": "keyword" }
                       }
                   }""";
 

@@ -240,7 +240,7 @@ public class OpenSearchHelper {
 
         if (!rankAggregatedClickThrough.isEmpty()) {
 
-            // TODO: Split this into multiple bulk insert requests.
+            createIndexIfNotExists(Constants.COEC_RANK_AGGREGATED_CTR_INDEX_NAME, Constants.COEC_RANK_AGGREGATED_CTR_INDEX_MAPPING);
 
             final BulkRequest request = new BulkRequest();
 
