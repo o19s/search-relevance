@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,7 +21,6 @@ import org.opensearch.core.action.ActionListener;
 import org.opensearch.searchrelevance.plugin.Constants;
 import org.opensearch.searchrelevance.plugin.judgments.opensearch.OpenSearchHelper;
 import org.opensearch.searchrelevance.plugin.utils.TimeUtils;
-import org.opensearch.transport.client.node.NodeClient;
 
 /**
  * An interface for sampling UBI queries.
@@ -53,12 +51,12 @@ public abstract class AbstractQuerySampler {
      * Index the query set.
      */
     protected String indexQuerySet(
-        final NodeClient client,
+        final String querySetId,
         final String name,
         final String description,
         final String sampling,
-        Map<String, Long> queries
-    ) throws Exception {
+        final Map<String, Long> queries
+    ) {
 
         LOGGER.info("Indexing {} queries for query set {}", queries.size(), name);
 
@@ -82,8 +80,6 @@ public abstract class AbstractQuerySampler {
         querySet.put("queries", querySetQueries);
         querySet.put("timestamp", TimeUtils.getTimestamp());
 
-        final String querySetId = UUID.randomUUID().toString();
-
         openSearchHelper.createIndexIfNotExists(Constants.QUERY_SETS_INDEX_NAME, Constants.QUERY_SETS_INDEX_MAPPING);
 
         final IndexRequest indexRequest = new IndexRequest().index(Constants.QUERY_SETS_INDEX_NAME)
@@ -91,7 +87,7 @@ public abstract class AbstractQuerySampler {
             .source(querySet)
             .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
 
-        client.index(indexRequest, new ActionListener<>() {
+        openSearchHelper.getClient().index(indexRequest, new ActionListener<>() {
 
             @Override
             public void onResponse(IndexResponse indexResponse) {

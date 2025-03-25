@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.commons.math3.distribution.UniformRealDistribution;
 import org.apache.logging.log4j.LogManager;
@@ -20,7 +21,9 @@ import org.apache.logging.log4j.Logger;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.action.search.SearchScrollRequest;
+import org.opensearch.common.unit.TimeValue;
 import org.opensearch.index.query.QueryBuilders;
+import org.opensearch.search.Scroll;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.builder.SearchSourceBuilder;
 import org.opensearch.searchrelevance.plugin.judgments.opensearch.OpenSearchHelper;
@@ -63,19 +66,15 @@ public class ProbabilityProportionalToSizeQuerySampler extends AbstractQuerySamp
     @Override
     public String sample() throws Exception {
 
-        // TODO: Can this be changed to an aggregation?
-        // An aggregation is limited (?) to 10,000 which could miss some queries.
-
         // Get queries from the UBI queries index.
         final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
         searchSourceBuilder.size(10000);
 
-        // TODO: Redo without scroll.
-        // final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(10L));
+        final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(10L));
 
         final SearchRequest searchRequest = new SearchRequest(UBI_QUERIES_INDEX_NAME);
-        // searchRequest.scroll(scroll);
+        searchRequest.scroll(scroll);
         searchRequest.source(searchSourceBuilder);
 
         // TODO: Don't use .get()
@@ -95,10 +94,10 @@ public class ProbabilityProportionalToSizeQuerySampler extends AbstractQuerySamp
             }
 
             final SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
-            // scrollRequest.scroll(scroll);
+            scrollRequest.scroll(scroll);
 
             // TODO: Don't use .get()
-            // searchResponse = client.searchScroll(scrollRequest).get();
+            searchResponse = client.searchScroll(scrollRequest).get();
 
             // scrollId = searchResponse.getScrollId();
             searchHits = searchResponse.getHits().getHits();
@@ -164,11 +163,13 @@ public class ProbabilityProportionalToSizeQuerySampler extends AbstractQuerySamp
 
         }
 
-        return indexQuerySet(client, parameters.getName(), parameters.getDescription(), parameters.getSampling(), querySet);
+        final String querySetId = UUID.randomUUID().toString();
+
+        return indexQuerySet(querySetId, parameters.getName(), parameters.getDescription(), parameters.getSampling(), querySet);
 
     }
 
-    public static boolean compare(double a, double b) {
+    private boolean compare(double a, double b) {
         return Math.abs(a - b) < 0.00001;
     }
 

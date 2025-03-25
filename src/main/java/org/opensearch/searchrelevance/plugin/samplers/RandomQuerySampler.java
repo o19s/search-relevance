@@ -14,7 +14,6 @@ import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.opensearch.action.index.IndexRequest;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.core.action.ActionListener;
@@ -30,7 +29,6 @@ import org.opensearch.search.builder.SearchSourceBuilder;
 import org.opensearch.search.collapse.CollapseBuilder;
 import org.opensearch.searchrelevance.plugin.Constants;
 import org.opensearch.searchrelevance.plugin.judgments.opensearch.OpenSearchHelper;
-import org.opensearch.searchrelevance.plugin.utils.TimeUtils;
 
 /**
  * A sampler that randomly selects a given number of queries.
@@ -102,24 +100,7 @@ public class RandomQuerySampler extends AbstractQuerySampler {
 
                 }
 
-                LOGGER.info("Indexing query set containing {} queries.", querySet.size());
-
-                // Index the query set and return its ID.
-                openSearchHelper.createIndexIfNotExists(Constants.QUERY_SETS_INDEX_NAME, Constants.QUERY_SETS_INDEX_MAPPING);
-
-                final String timestamp = TimeUtils.getTimestamp();
-
-                final Map<String, Object> jsonMap = new HashMap<>();
-                jsonMap.put("timestamp", timestamp);
-                jsonMap.put("description", parameters.getDescription());
-                jsonMap.put("id", querySetId);
-                jsonMap.put("name", parameters.getName());
-                jsonMap.put("query_set_queries", querySet);
-                jsonMap.put("sampling", "random");
-
-                final IndexRequest indexRequest = new IndexRequest(Constants.QUERY_SETS_INDEX_NAME).id(querySetId).source(jsonMap);
-
-                openSearchHelper.getClient().index(indexRequest).actionGet();
+                indexQuerySet(querySetId, parameters.getName(), parameters.getDescription(), parameters.getSampling(), querySet);
 
             }
 
