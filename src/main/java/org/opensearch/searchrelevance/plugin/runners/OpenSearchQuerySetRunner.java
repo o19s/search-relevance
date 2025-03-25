@@ -213,7 +213,7 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
         // See https://github.com/o19s/opensearch-search-quality-evaluation/blob/main/opensearch-dashboard-prototyping/METRICS_SCHEMA.md
         // See https://github.com/o19s/opensearch-search-quality-evaluation/blob/main/opensearch-dashboard-prototyping/sample_data.ndjson
 
-        openSearchHelper.createIndexIfNotExists(client, Constants.METRICS_INDEX_NAME, Constants.METRICS_INDEX_MAPPING);
+        openSearchHelper.createIndexIfNotExists(Constants.METRICS_INDEX_NAME, Constants.METRICS_INDEX_MAPPING);
 
         final BulkRequest bulkRequest = new BulkRequest();
         final String timestamp = TimeUtils.getTimestamp();

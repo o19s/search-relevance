@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,10 +27,12 @@ import org.opensearch.action.bulk.BulkResponse;
 import org.opensearch.action.index.IndexRequest;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
+import org.opensearch.common.unit.TimeValue;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.index.query.WrapperQueryBuilder;
 import org.opensearch.search.SearchHit;
+import org.opensearch.search.SearchHits;
 import org.opensearch.search.builder.SearchSourceBuilder;
 import org.opensearch.searchrelevance.plugin.Constants;
 import org.opensearch.searchrelevance.plugin.judgments.model.ClickthroughRate;
@@ -346,7 +349,7 @@ public class OpenSearchHelper {
 
     }
 
-    public void createIndexIfNotExists(final Client client, final String indexName, final String indexMapping) throws Exception {
+    public void createIndexIfNotExists(final String indexName, final String indexMapping) {
 
         final IndicesExistsRequest indicesExistsRequest = new IndicesExistsRequest(indexName);
 
@@ -383,6 +386,25 @@ public class OpenSearchHelper {
             }
 
         });
+
+    }
+
+    public long getUserQueryCount(final String userQuery) {
+
+        final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(QueryBuilders.termQuery("user_query", userQuery));
+        searchSourceBuilder.size(0);
+        searchSourceBuilder.trackTotalHits(true);
+
+        final SearchRequest searchRequest = new SearchRequest(Constants.UBI_QUERIES_INDEX_NAME);
+        searchRequest.source(searchSourceBuilder);
+
+        final SearchResponse searchResponse = client.search(searchRequest)
+            .actionGet(TimeValue.timeValueSeconds(5).millis(), TimeUnit.MILLISECONDS);
+
+        final SearchHits hits = searchResponse.getHits();
+
+        return hits.getTotalHits().value();
 
     }
 

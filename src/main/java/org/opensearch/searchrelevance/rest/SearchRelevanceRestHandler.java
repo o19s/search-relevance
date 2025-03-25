@@ -258,7 +258,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                     // TODO: Run this in a separate thread.
                     try {
 
-                        openSearchHelper.createIndexIfNotExists(client, Constants.JUDGMENTS_INDEX_NAME, Constants.JUDGMENTS_INDEX_MAPPING);
+                        openSearchHelper.createIndexIfNotExists(Constants.JUDGMENTS_INDEX_NAME, Constants.JUDGMENTS_INDEX_MAPPING);
 
                         judgmentsId = coecClickModel.calculateJudgments();
 

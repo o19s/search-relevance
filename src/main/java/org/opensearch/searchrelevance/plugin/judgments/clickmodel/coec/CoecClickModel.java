@@ -291,7 +291,7 @@ public class CoecClickModel extends ClickModel {
 
         }
 
-        openSearchHelper.createIndexIfNotExists(client, Constants.COEC_CTR_INDEX_NAME, Constants.COEC_CTR_INDEX_MAPPING);
+        openSearchHelper.createIndexIfNotExists(Constants.COEC_CTR_INDEX_NAME, Constants.COEC_CTR_INDEX_MAPPING);
         openSearchHelper.indexClickthroughRates(queriesToClickthroughRates);
 
         return queriesToClickthroughRates;

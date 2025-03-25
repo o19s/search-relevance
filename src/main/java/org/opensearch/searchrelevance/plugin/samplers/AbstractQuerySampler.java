@@ -84,7 +84,7 @@ public abstract class AbstractQuerySampler {
 
         final String querySetId = UUID.randomUUID().toString();
 
-        openSearchHelper.createIndexIfNotExists(client, Constants.QUERY_SETS_INDEX_NAME, Constants.QUERY_SETS_INDEX_MAPPING);
+        openSearchHelper.createIndexIfNotExists(Constants.QUERY_SETS_INDEX_NAME, Constants.QUERY_SETS_INDEX_MAPPING);
 
         final IndexRequest indexRequest = new IndexRequest().index(Constants.QUERY_SETS_INDEX_NAME)
             .id(querySetId)
