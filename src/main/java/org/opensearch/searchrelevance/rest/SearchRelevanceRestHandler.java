@@ -30,6 +30,8 @@ import org.opensearch.searchrelevance.plugin.samplers.ProbabilityProportionalToS
 import org.opensearch.searchrelevance.plugin.samplers.ProbabilityProportionalToSizeQuerySamplerParameters;
 import org.opensearch.searchrelevance.plugin.samplers.RandomQuerySampler;
 import org.opensearch.searchrelevance.plugin.samplers.RandomQuerySamplerParameters;
+import org.opensearch.searchrelevance.plugin.samplers.TopNQuerySampler;
+import org.opensearch.searchrelevance.plugin.samplers.TopNQuerySamplerParameters;
 import org.opensearch.transport.client.node.NodeClient;
 
 public class SearchRelevanceRestHandler extends BaseRestHandler {
@@ -110,6 +112,29 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                     );
 
                     final RandomQuerySampler sampler = new RandomQuerySampler(openSearchHelper, parameters);
+
+                    try {
+
+                        // Sample and index the queries.
+                        final String querySetId = sampler.sample();
+
+                        return restChannel -> restChannel.sendResponse(
+                            new BytesRestResponse(RestStatus.OK, "{\"query_set\": \"" + querySetId + "\"}")
+                        );
+
+                    } catch (Exception ex) {
+                        return restChannel -> restChannel.sendResponse(
+                            new BytesRestResponse(RestStatus.INTERNAL_SERVER_ERROR, "{\"error\": \"" + ex.getMessage() + "\"}")
+                        );
+                    }
+
+                } else if (TopNQuerySampler.NAME.equalsIgnoreCase(sampling)) {
+
+                    LOGGER.info("Creating query set using top-N sampling.");
+
+                    final TopNQuerySamplerParameters parameters = new TopNQuerySamplerParameters(name, description, sampling, querySetSize);
+
+                    final TopNQuerySampler sampler = new TopNQuerySampler(openSearchHelper, parameters);
 
                     try {
 

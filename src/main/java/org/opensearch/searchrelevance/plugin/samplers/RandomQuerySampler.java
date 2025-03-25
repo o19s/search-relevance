@@ -58,8 +58,6 @@ public class RandomQuerySampler extends AbstractQuerySampler {
 
         final String userQueryField = "user_query";
 
-        final long seed = System.currentTimeMillis();
-
         final RandomScoreFunctionBuilder randomScoreFunction = ScoreFunctionBuilders.randomFunction(); // .setField(userQueryField).seed(seed);
 
         final FunctionScoreQueryBuilder functionScoreQueryBuilder = QueryBuilders.functionScoreQuery(
@@ -113,7 +111,7 @@ public class RandomQuerySampler extends AbstractQuerySampler {
 
                 final Map<String, Object> jsonMap = new HashMap<>();
                 jsonMap.put("timestamp", timestamp);
-                jsonMap.put("description", "Description of the query set");
+                jsonMap.put("description", parameters.getDescription());
                 jsonMap.put("id", querySetId);
                 jsonMap.put("name", parameters.getName());
                 jsonMap.put("query_set_queries", querySet);

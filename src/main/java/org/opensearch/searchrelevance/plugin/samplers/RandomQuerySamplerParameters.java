@@ -10,7 +10,7 @@ package org.opensearch.searchrelevance.plugin.samplers;
 public class RandomQuerySamplerParameters extends AbstractQuerySamplerParameters {
 
     public RandomQuerySamplerParameters(String name, String description, String sampling, int querySetSize) {
-        super("random", name, description, sampling, querySetSize);
+        super(RandomQuerySampler.NAME, name, description, sampling, querySetSize);
     }
 
 }
