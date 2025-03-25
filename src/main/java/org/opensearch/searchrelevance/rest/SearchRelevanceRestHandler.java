@@ -26,8 +26,6 @@ import org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClick
 import org.opensearch.searchrelevance.plugin.judgments.opensearch.OpenSearchHelper;
 import org.opensearch.searchrelevance.plugin.runners.OpenSearchQuerySetRunner;
 import org.opensearch.searchrelevance.plugin.runners.QuerySetRunResult;
-import org.opensearch.searchrelevance.plugin.samplers.AllQueriesQueryQuerySamplerParameters;
-import org.opensearch.searchrelevance.plugin.samplers.AllQueriesQuerySampler;
 import org.opensearch.searchrelevance.plugin.samplers.ProbabilityProportionalToSizeQuerySampler;
 import org.opensearch.searchrelevance.plugin.samplers.ProbabilityProportionalToSizeQuerySamplerParameters;
 import org.opensearch.searchrelevance.plugin.samplers.RandomQuerySampler;
@@ -72,37 +70,8 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                 final String sampling = request.param("sampling", "pptss");
                 final int querySetSize = Integer.parseInt(request.param("query_set_size", "1000"));
 
-                // Create a query set by finding all the unique user_query terms.
-                if (AllQueriesQuerySampler.NAME.equalsIgnoreCase(sampling)) {
-
-                    // If we are not sampling queries, the query sets should just be directly
-                    // indexed into OpenSearch using the `ubi_queries` index directly.
-
-                    try {
-
-                        final AllQueriesQueryQuerySamplerParameters parameters = new AllQueriesQueryQuerySamplerParameters(
-                            name,
-                            description,
-                            sampling,
-                            querySetSize
-                        );
-                        final AllQueriesQuerySampler sampler = new AllQueriesQuerySampler(openSearchHelper, client, parameters);
-
-                        // Sample and index the queries.
-                        final String querySetId = sampler.sample();
-
-                        return restChannel -> restChannel.sendResponse(
-                            new BytesRestResponse(RestStatus.OK, "{\"query_set\": \"" + querySetId + "\"}")
-                        );
-
-                    } catch (Exception ex) {
-                        return restChannel -> restChannel.sendResponse(
-                            new BytesRestResponse(RestStatus.INTERNAL_SERVER_ERROR, "{\"error\": \"" + ex.getMessage() + "\"}")
-                        );
-                    }
-
-                    // Create a query set by using PPTSS sampling.
-                } else if (ProbabilityProportionalToSizeQuerySampler.NAME.equalsIgnoreCase(sampling)) {
+                // Create a query set using PPTSS sampling.
+                if (ProbabilityProportionalToSizeQuerySampler.NAME.equalsIgnoreCase(sampling)) {
 
                     LOGGER.info("Creating query set using PPTSS");
 
