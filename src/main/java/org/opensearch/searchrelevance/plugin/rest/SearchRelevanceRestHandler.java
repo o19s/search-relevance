@@ -5,18 +5,22 @@
  * this file be licensed under the Apache-2.0 license or a
  * compatible open source license.
  */
-package org.opensearch.searchrelevance.rest;
+package org.opensearch.searchrelevance.plugin.rest;
 
 import static org.opensearch.searchrelevance.plugin.Constants.QUERY_PLACEHOLDER;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.opensearch.action.delete.DeleteResponse;
+import org.opensearch.action.index.IndexResponse;
+import org.opensearch.action.search.SearchResponse;
+import org.opensearch.core.action.ActionListener;
 import org.opensearch.core.common.bytes.BytesReference;
 import org.opensearch.core.rest.RestStatus;
 import org.opensearch.rest.BaseRestHandler;
@@ -47,7 +51,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
     private static final String JUDGMENTS_URL = "/_plugins/search_relevance/judgments";
     private static final String QUERYSETS_URL = "/_plugins/search_relevance/query_sets";
     private static final String EXPERIMENTS_URL = "/_plugins/search_relevance/experiments";
-    private static final String SEARCH_CONFIGS_URL = "/_plugins/search_relevance/search_configurations";
+    private static final String SEARCH_CONFIGURATIONS_URL = "/_plugins/search_relevance/search_configurations";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -62,16 +66,20 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
             new Route(RestRequest.Method.POST, JUDGMENTS_URL),
             new Route(RestRequest.Method.POST, QUERYSETS_URL),
             new Route(RestRequest.Method.POST, EXPERIMENTS_URL),
-            new Route(RestRequest.Method.POST, SEARCH_CONFIGS_URL)
+            new Route(RestRequest.Method.POST, SEARCH_CONFIGURATIONS_URL),
+            new Route(RestRequest.Method.DELETE, SEARCH_CONFIGURATIONS_URL + "/{id}")
         );
     }
 
     @Override
-    protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) throws IOException {
+    protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) {
 
         final OpenSearchHelper openSearchHelper = new OpenSearchHelper(client);
 
-        if (SEARCH_CONFIGS_URL.equals(request.path())) {
+        final String rawPath = request.rawPath();
+        LOGGER.info("rawPath = {}", rawPath);
+
+        if (rawPath.startsWith(SEARCH_CONFIGURATIONS_URL)) {
 
             // Create a new search config.
             if (request.method().equals(RestRequest.Method.POST)) {
@@ -88,12 +96,81 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                     }
                 );
 
-                openSearchHelper.createIndexIfNotExists(Constants.SEARCH_CONFIG_INDEX_NAME, Constants.SEARCH_CONFIG_INDEX_MAPPING);
-                final String searchConfigurationId = openSearchHelper.indexSearchConfiguration(searchConfiguration);
+                openSearchHelper.createIndexIfNotExists(Constants.SEARCH_CONFIGURATIONS_INDEX_NAME, Constants.SEARCH_CONFIGURATIONS_INDEX_MAPPING);
 
-                return restChannel -> restChannel.sendResponse(
-                    new BytesRestResponse(RestStatus.OK, "{\"search_config\": \"" + searchConfigurationId + "\"}")
-                );
+                final String searchConfigurationId = UUID.randomUUID().toString();
+
+                return (channel) -> {
+                    openSearchHelper.indexSearchConfiguration(searchConfigurationId, searchConfiguration, new ActionListener<>() {
+
+                        @Override
+                        public void onResponse(IndexResponse indexResponse) {
+                            channel.sendResponse(new BytesRestResponse(RestStatus.OK, "{\"id\": \"" + searchConfigurationId + "\"}"));
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            channel.sendResponse(
+                                new BytesRestResponse(
+                                    RestStatus.INTERNAL_SERVER_ERROR,
+                                    "{\"error\": \"Unable to create search configuration: " + e.getMessage() + "\"}"
+                                )
+                            );
+                        }
+                    });
+                };
+
+            } else if (request.method().equals(RestRequest.Method.DELETE)) {
+
+                final String searchConfigurationId = request.param("id");
+
+                return (channel) -> {
+
+                    openSearchHelper.deleteSearchConfiguration(searchConfigurationId, new ActionListener<>() {
+
+                        @Override
+                        public void onResponse(DeleteResponse deleteResponse) {
+                            if (deleteResponse.getResult() == org.opensearch.action.DocWriteResponse.Result.NOT_FOUND) {
+                                channel.sendResponse(new BytesRestResponse(RestStatus.NO_CONTENT, "{\"acknowledged\": \"false\"}"));
+                            } else {
+                                channel.sendResponse(new BytesRestResponse(RestStatus.OK, "{\"acknowledged\": \"true\"}"));
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            channel.sendResponse(
+                                new BytesRestResponse(
+                                    RestStatus.INTERNAL_SERVER_ERROR,
+                                    "{\"error\": \"Failed to delete: " + e.getMessage() + "\"}"
+                                )
+                            );
+                        }
+
+                    });
+
+                };
+
+            } else if (request.method().equals(RestRequest.Method.GET)) {
+
+                return (channel) -> {
+                    openSearchHelper.getSearchConfigurations(new ActionListener<>() {
+
+                        @Override
+                        public void onResponse(SearchResponse indexResponse) {
+                            channel.sendResponse(new BytesRestResponse(RestStatus.OK, "{\"id\": \"" + searchConfigurationId + "\"}"));
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            channel.sendResponse(
+                                    new BytesRestResponse(
+                                            RestStatus.INTERNAL_SERVER_ERROR,
+                                            "{\"error\": \"Unable to create search configuration: " + e.getMessage() + "\"}"
+                                    )
+                            );
+                        }
+                    });
 
             } else {
                 // Invalid HTTP method for this endpoint.

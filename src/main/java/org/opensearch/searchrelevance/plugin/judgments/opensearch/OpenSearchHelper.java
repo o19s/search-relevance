@@ -24,7 +24,10 @@ import org.opensearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.opensearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.opensearch.action.bulk.BulkRequest;
 import org.opensearch.action.bulk.BulkResponse;
+import org.opensearch.action.delete.DeleteRequest;
+import org.opensearch.action.delete.DeleteResponse;
 import org.opensearch.action.index.IndexRequest;
+import org.opensearch.action.index.IndexResponse;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.common.unit.TimeValue;
@@ -409,19 +412,40 @@ public class OpenSearchHelper {
 
     }
 
-    public String indexSearchConfiguration(final SearchConfiguration searchConfiguration) {
-
-        final String searchConfigurationId = UUID.randomUUID().toString();
+    public void indexSearchConfiguration(
+        final String searchConfigurationId,
+        final SearchConfiguration searchConfiguration,
+        ActionListener<IndexResponse> listener
+    ) {
 
         final Map<String, Object> jsonMap = new HashMap<>();
         jsonMap.put("search_configuration_name", searchConfiguration.getSearchConfigurationName());
         jsonMap.put("query_body", searchConfiguration.getQueryBody());
 
-        final IndexRequest indexRequest = new IndexRequest(Constants.SEARCH_CONFIG_INDEX_NAME).id(searchConfigurationId).source(jsonMap);
+        final IndexRequest indexRequest = new IndexRequest(Constants.SEARCH_CONFIGURATIONS_INDEX_NAME).id(searchConfigurationId).source(jsonMap);
 
-        client.index(indexRequest).actionGet();
+        client.index(indexRequest, listener);
 
-        return searchConfigurationId;
+    }
+
+    public void deleteSearchConfiguration(final String searchConfigurationId, ActionListener<DeleteResponse> listener) {
+
+        LOGGER.info("Deleting search configuration with ID: {}", searchConfigurationId);
+
+        final DeleteRequest deleteRequest = new DeleteRequest(Constants.SEARCH_CONFIGURATIONS_INDEX_NAME).id(searchConfigurationId);
+        client.delete(deleteRequest, listener);
+
+    }
+
+    public void getSearchConfigurations(ActionListener<SearchResponse> listener) {
+
+        final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+
+        final SearchRequest searchRequest = new SearchRequest(Constants.SEARCH_CONFIGURATIONS_INDEX_NAME);
+        searchRequest.source(searchSourceBuilder);
+
+        client.search(searchRequest, listener);
 
     }
 

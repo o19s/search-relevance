@@ -22,7 +22,7 @@ import org.opensearch.plugins.IngestPlugin;
 import org.opensearch.plugins.Plugin;
 import org.opensearch.rest.RestController;
 import org.opensearch.rest.RestHandler;
-import org.opensearch.searchrelevance.rest.SearchRelevanceRestHandler;
+import org.opensearch.searchrelevance.plugin.rest.SearchRelevanceRestHandler;
 
 public class SearchRelevancePlugin extends Plugin implements IngestPlugin, ActionPlugin {
 

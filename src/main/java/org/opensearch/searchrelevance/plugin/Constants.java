@@ -151,12 +151,12 @@ public class Constants {
     /**
      * The name of the index that stores the search configurations.
      */
-    public final static String SEARCH_CONFIG_INDEX_NAME = "srw_search_configurations";
+    public final static String SEARCH_CONFIGURATIONS_INDEX_NAME = "srw_search_configurations";
 
     /**
      * The query results index mapping.
      */
-    public static final String SEARCH_CONFIG_INDEX_MAPPING = """
+    public static final String SEARCH_CONFIGURATIONS_INDEX_MAPPING = """
         {
                       "properties": {
                         "id": { "type": "keyword" },
