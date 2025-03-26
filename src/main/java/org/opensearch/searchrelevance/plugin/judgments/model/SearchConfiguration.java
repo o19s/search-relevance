@@ -11,11 +11,23 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SearchConfiguration {
 
+    private String id;
+
     @JsonProperty("search_configuration_name")
     private String searchConfigurationName;
 
     @JsonProperty("query_body")
     private String queryBody;
+
+    public SearchConfiguration() {
+
+    }
+
+    public SearchConfiguration(final String id, final String searchConfigurationName, final String queryBody) {
+        this.id = id;
+        this.searchConfigurationName = searchConfigurationName;
+        this.queryBody = queryBody;
+    }
 
     public String getSearchConfigurationName() {
         return searchConfigurationName;
@@ -31,6 +43,14 @@ public class SearchConfiguration {
 
     public void setQueryBody(String queryBody) {
         this.queryBody = queryBody;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
 }

@@ -12,7 +12,9 @@ import static org.opensearch.searchrelevance.plugin.Constants.QUERY_PLACEHOLDER;
 import java.nio.charset.Charset;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
@@ -26,6 +28,7 @@ import org.opensearch.core.rest.RestStatus;
 import org.opensearch.rest.BaseRestHandler;
 import org.opensearch.rest.BytesRestResponse;
 import org.opensearch.rest.RestRequest;
+import org.opensearch.search.SearchHit;
 import org.opensearch.searchrelevance.plugin.Constants;
 import org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClickModel;
 import org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClickModelParameters;
@@ -67,6 +70,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
             new Route(RestRequest.Method.POST, QUERYSETS_URL),
             new Route(RestRequest.Method.POST, EXPERIMENTS_URL),
             new Route(RestRequest.Method.POST, SEARCH_CONFIGURATIONS_URL),
+            new Route(RestRequest.Method.GET, SEARCH_CONFIGURATIONS_URL),
             new Route(RestRequest.Method.DELETE, SEARCH_CONFIGURATIONS_URL + "/{id}")
         );
     }
@@ -96,7 +100,10 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                     }
                 );
 
-                openSearchHelper.createIndexIfNotExists(Constants.SEARCH_CONFIGURATIONS_INDEX_NAME, Constants.SEARCH_CONFIGURATIONS_INDEX_MAPPING);
+                openSearchHelper.createIndexIfNotExists(
+                    Constants.SEARCH_CONFIGURATIONS_INDEX_NAME,
+                    Constants.SEARCH_CONFIGURATIONS_INDEX_MAPPING
+                );
 
                 final String searchConfigurationId = UUID.randomUUID().toString();
 
@@ -157,20 +164,47 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                     openSearchHelper.getSearchConfigurations(new ActionListener<>() {
 
                         @Override
-                        public void onResponse(SearchResponse indexResponse) {
-                            channel.sendResponse(new BytesRestResponse(RestStatus.OK, "{\"id\": \"" + searchConfigurationId + "\"}"));
+                        public void onResponse(SearchResponse searchResponse) {
+
+                            final List<SearchConfiguration> searchConfigurations = new ArrayList<>();
+
+                            final ObjectMapper objectMapper = new ObjectMapper();
+
+                            for (final SearchHit hit : searchResponse.getHits().getHits()) {
+                                final Map<String, Object> source = hit.getSourceAsMap();
+                                searchConfigurations.add(
+                                    new SearchConfiguration(
+                                        source.get("id").toString(),
+                                        source.get("search_configuration_name").toString(),
+                                        source.get("query_body").toString()
+                                    )
+                                );
+                            }
+
+                            final String jsonResponse = AccessController.doPrivileged((PrivilegedAction<String>) () -> {
+                                try {
+                                    return objectMapper.writeValueAsString(searchConfigurations);
+                                } catch (JsonProcessingException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            });
+
+                            channel.sendResponse(new BytesRestResponse(RestStatus.OK, jsonResponse));
+
                         }
 
                         @Override
-                        public void onFailure(Exception e) {
+                        public void onFailure(Exception ex) {
+                            LOGGER.error("Error:", ex);
                             channel.sendResponse(
-                                    new BytesRestResponse(
-                                            RestStatus.INTERNAL_SERVER_ERROR,
-                                            "{\"error\": \"Unable to create search configuration: " + e.getMessage() + "\"}"
-                                    )
+                                new BytesRestResponse(
+                                    RestStatus.INTERNAL_SERVER_ERROR,
+                                    "{\"error\": \"Unable to get search configurations: " + ex.getMessage() + "\"}"
+                                )
                             );
                         }
                     });
+                };
 
             } else {
                 // Invalid HTTP method for this endpoint.

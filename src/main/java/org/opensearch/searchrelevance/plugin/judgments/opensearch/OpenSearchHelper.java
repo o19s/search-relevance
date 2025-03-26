@@ -421,8 +421,10 @@ public class OpenSearchHelper {
         final Map<String, Object> jsonMap = new HashMap<>();
         jsonMap.put("search_configuration_name", searchConfiguration.getSearchConfigurationName());
         jsonMap.put("query_body", searchConfiguration.getQueryBody());
+        jsonMap.put("id", searchConfigurationId);
 
-        final IndexRequest indexRequest = new IndexRequest(Constants.SEARCH_CONFIGURATIONS_INDEX_NAME).id(searchConfigurationId).source(jsonMap);
+        final IndexRequest indexRequest = new IndexRequest(Constants.SEARCH_CONFIGURATIONS_INDEX_NAME).id(searchConfigurationId)
+            .source(jsonMap);
 
         client.index(indexRequest, listener);
 
@@ -438,6 +440,8 @@ public class OpenSearchHelper {
     }
 
     public void getSearchConfigurations(ActionListener<SearchResponse> listener) {
+
+        // TODO: #16 Add support for timestamp sorting and limiting the size.
 
         final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());

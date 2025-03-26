@@ -1,3 +1,3 @@
 #!/bin/bash -e
 
-curl -s "http://localhost:9200/srw_search_configurations/_search" | jq
+curl -s -X GET "http://localhost:9200/_plugins/search_relevance/search_configurations" | jq
