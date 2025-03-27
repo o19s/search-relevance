@@ -216,7 +216,6 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
 
             for (final SearchMetric searchMetric : queryResult.getSearchMetrics()) {
 
-                // TODO: Make sure all of these items have values.
                 final Map<String, Object> metrics = new HashMap<>();
                 metrics.put("datetime", timestamp);
                 metrics.put("search_config", "research_1");
@@ -228,8 +227,7 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
                 metrics.put("evaluation_id", result.getRunId());
                 metrics.put("frogs_percent", queryResult.getFrogs());
 
-                // TODO: This is using the index name from the sample data.
-                bulkRequest.add(new IndexRequest("sqe_metrics_sample_data").source(metrics));
+                bulkRequest.add(new IndexRequest(Constants.METRICS_INDEX_NAME).source(metrics));
 
             }
 
