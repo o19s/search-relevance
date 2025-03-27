@@ -5,7 +5,7 @@
  * this file be licensed under the Apache-2.0 license or a
  * compatible open source license.
  */
-package org.opensearch.searchrelevance.plugin.judgments.model.ubi.event;
+package org.opensearch.searchrelevance.plugin.model.ubi.event;
 
 import com.google.gson.annotations.SerializedName;
 

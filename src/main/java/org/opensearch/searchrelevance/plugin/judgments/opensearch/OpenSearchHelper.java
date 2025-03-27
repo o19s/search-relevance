@@ -40,11 +40,11 @@ import org.opensearch.search.builder.SearchSourceBuilder;
 import org.opensearch.search.sort.FieldSortBuilder;
 import org.opensearch.search.sort.SortOrder;
 import org.opensearch.searchrelevance.plugin.Constants;
-import org.opensearch.searchrelevance.plugin.judgments.model.ClickthroughRate;
-import org.opensearch.searchrelevance.plugin.judgments.model.Judgment;
-import org.opensearch.searchrelevance.plugin.judgments.model.SearchConfiguration;
-import org.opensearch.searchrelevance.plugin.judgments.model.ubi.query.UbiQuery;
+import org.opensearch.searchrelevance.plugin.model.ClickthroughRate;
 import org.opensearch.searchrelevance.plugin.model.GetSearchConfigurationsRequest;
+import org.opensearch.searchrelevance.plugin.model.Judgment;
+import org.opensearch.searchrelevance.plugin.model.SearchConfiguration;
+import org.opensearch.searchrelevance.plugin.model.ubi.query.UbiQuery;
 import org.opensearch.searchrelevance.plugin.utils.TimeUtils;
 import org.opensearch.transport.client.Client;
 
