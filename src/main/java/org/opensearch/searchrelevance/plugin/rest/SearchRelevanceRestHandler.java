@@ -339,7 +339,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
 
         } else if (EXPERIMENTS_URL.equalsIgnoreCase(request.path())) {
 
-            // TODO: Perhaps these parameters are better passed in the body instead of as query params.
+            // TODO: Read these from the POST body - issue #40 - https://github.com/o19s/search-relevance/issues/40
             final String querySetId = request.param("id");
             final String judgmentsId = request.param("judgments_id");
             final String index = request.param("index");
@@ -347,6 +347,8 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
             final String idField = request.param("id_field", "_id");
             final int k = Integer.parseInt(request.param("k", "10"));
             final double threshold = Double.parseDouble(request.param("threshold", "1.0"));
+            final String application = request.param("application", null);
+            final String searchConfiguration = request.param("search_configuration", null);
 
             if (querySetId == null
                 || querySetId.isEmpty()
@@ -392,7 +394,9 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                     idField,
                     query,
                     k,
-                    threshold
+                    threshold,
+                    application,
+                    searchConfiguration
                 );
                 openSearchQuerySetRunner.save(querySetRunResult);
 

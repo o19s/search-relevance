@@ -26,6 +26,8 @@ public class QuerySetRunResult {
     private final List<QueryResult> queryResults;
     private final Map<String, Double> metrics;
     private final String timestamp;
+    private final String application;
+    private final String searchConfiguration;
 
     /**
      * Creates a new query set run result. A random UUID is generated as the run ID.
@@ -38,13 +40,17 @@ public class QuerySetRunResult {
         final String runId,
         final String querySetId,
         final List<QueryResult> queryResults,
-        final Map<String, Double> metrics
+        final Map<String, Double> metrics,
+        String application,
+        String searchConfiguration
     ) {
         this.runId = runId;
         this.querySetId = querySetId;
         this.queryResults = queryResults;
         this.metrics = metrics;
         this.timestamp = TimeUtils.getTimestamp();
+        this.application = application;
+        this.searchConfiguration = searchConfiguration;
     }
 
     /**
@@ -108,4 +114,11 @@ public class QuerySetRunResult {
 
     }
 
+    public String getApplication() {
+        return application;
+    }
+
+    public String getSearchConfiguration() {
+        return searchConfiguration;
+    }
 }

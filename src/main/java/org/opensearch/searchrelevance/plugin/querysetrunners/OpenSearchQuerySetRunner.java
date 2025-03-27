@@ -58,7 +58,9 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
         final String idField,
         final String query,
         final int k,
-        final double threshold
+        final double threshold,
+        final String application,
+        final String searchConfiguration
     ) throws Exception {
 
         final Collection<Map<String, Long>> querySet = getQuerySet(querySetId);
@@ -187,7 +189,14 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
             }
 
             final String querySetRunId = UUID.randomUUID().toString();
-            final QuerySetRunResult querySetRunResult = new QuerySetRunResult(querySetRunId, querySetId, queryResults, querySetMetrics);
+            final QuerySetRunResult querySetRunResult = new QuerySetRunResult(
+                querySetRunId,
+                querySetId,
+                queryResults,
+                querySetMetrics,
+                application,
+                searchConfiguration
+            );
 
             LOGGER.info("Query set run complete: {}", querySetRunId);
 
@@ -218,12 +227,12 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
 
                 final Map<String, Object> metrics = new HashMap<>();
                 metrics.put("timestamp", timestamp);
-                metrics.put("search_config", "research_1");
+                metrics.put("search_configuration", result.getSearchConfiguration());
                 metrics.put("query_set_id", result.getQuerySetId());
                 metrics.put("user_query", queryResult.getQuery());
                 metrics.put("metric", searchMetric.getName());
                 metrics.put("value", searchMetric.getValue());
-                metrics.put("application", "sample_data");
+                metrics.put("application", result.getApplication());
                 metrics.put("evaluation_id", result.getRunId());
                 metrics.put("frogs_percent", queryResult.getFrogs());
 

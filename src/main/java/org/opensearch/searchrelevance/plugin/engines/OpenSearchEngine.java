@@ -110,6 +110,8 @@ public class OpenSearchEngine implements SearchEngine {
         final String[] indexes = { Constants.UBI_QUERIES_INDEX_NAME };
 
         final SearchRequest searchRequest = new SearchRequest(indexes, searchSourceBuilder);
+
+        // TODO: Don't use .get()
         final SearchResponse response = client.search(searchRequest).get();
 
         // If this does not return a query, then we cannot calculate the judgments. Each even should have a query associated with it.
@@ -139,6 +141,8 @@ public class OpenSearchEngine implements SearchEngine {
         final String[] indexes = { Constants.UBI_QUERIES_INDEX_NAME };
 
         final SearchRequest searchRequest = new SearchRequest(indexes, searchSourceBuilder);
+
+        // TODO: Don't use .get()
         final SearchResponse response = client.search(searchRequest).get();
 
         final Collection<String> queryIds = new ArrayList<>();
@@ -334,6 +338,8 @@ public class OpenSearchEngine implements SearchEngine {
         for (final Judgment judgment : judgments) {
 
             final Map<String, Object> j = judgment.getJudgmentAsMap();
+
+            // Add these additional properties to the judgment.
             j.put("judgments_id", judgmentsId);
             j.put("timestamp", timestamp);
 

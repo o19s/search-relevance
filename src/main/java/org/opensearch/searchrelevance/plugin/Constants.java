@@ -116,7 +116,7 @@ public class Constants {
         {
                       "properties": {
                         "timestamp": { "type": "date", "format": "strict_date_time" },
-                        "search_config": { "type": "keyword" },
+                        "search_configuration": { "type": "keyword" },
                         "query_set_id": { "type": "keyword" },
                         "user_query": { "type": "keyword" },
                         "metric": { "type": "keyword" },

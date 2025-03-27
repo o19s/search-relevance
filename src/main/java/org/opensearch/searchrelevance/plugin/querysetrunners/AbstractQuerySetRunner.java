@@ -60,7 +60,9 @@ public abstract class AbstractQuerySetRunner {
         final String idField,
         final String query,
         final int k,
-        final double threshold
+        final double threshold,
+        final String application,
+        final String searchConfiguration
     ) throws Exception;
 
     /**
@@ -138,6 +140,7 @@ public abstract class AbstractQuerySetRunner {
 
         Double judgment = Double.NaN;
 
+        // TODO: Don't use .get()
         final SearchResponse searchResponse = openSearchEngine.getClient().search(searchRequest).get();
 
         if (searchResponse.getHits().getHits().length > 0) {
@@ -146,7 +149,6 @@ public abstract class AbstractQuerySetRunner {
 
             // LOGGER.debug("Judgment contains a value: {}", j.get("judgment"));
 
-            // TODO: Why does this not exist in some cases?
             if (j.containsKey("judgment")) {
                 judgment = (Double) j.get("judgment");
             }
