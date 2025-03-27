@@ -160,6 +160,7 @@ public class Constants {
         {
                       "properties": {
                         "id": { "type": "keyword" },
+                        "timestamp": { "type": "date", "format": "strict_date_time" },
                         "name": { "type": "keyword" },
                         "query": { "type": "object" },
                         "search_pipeline": { "type": "keyword" }

@@ -34,6 +34,7 @@ import org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClick
 import org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClickModelParameters;
 import org.opensearch.searchrelevance.plugin.judgments.model.SearchConfiguration;
 import org.opensearch.searchrelevance.plugin.judgments.opensearch.OpenSearchHelper;
+import org.opensearch.searchrelevance.plugin.model.GetSearchConfigurationsRequest;
 import org.opensearch.searchrelevance.plugin.runners.OpenSearchQuerySetRunner;
 import org.opensearch.searchrelevance.plugin.runners.QuerySetRunResult;
 import org.opensearch.searchrelevance.plugin.samplers.ProbabilityProportionalToSizeQuerySampler;
@@ -160,8 +161,26 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
 
             } else if (request.method().equals(RestRequest.Method.GET)) {
 
+                final String requestBody = request.content().utf8ToString();
+
+                final GetSearchConfigurationsRequest getSearchConfigurationsRequest;
+                if (!requestBody.isEmpty()) {
+                    getSearchConfigurationsRequest = AccessController.doPrivileged(
+                        (PrivilegedAction<GetSearchConfigurationsRequest>) () -> {
+                            try {
+                                return objectMapper.readValue(requestBody, GetSearchConfigurationsRequest.class);
+                            } catch (JsonProcessingException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    );
+                } else {
+                    // None provided so use defaults.
+                    getSearchConfigurationsRequest = new GetSearchConfigurationsRequest();
+                }
+
                 return (channel) -> {
-                    openSearchHelper.getSearchConfigurations(new ActionListener<>() {
+                    openSearchHelper.getSearchConfigurations(getSearchConfigurationsRequest, new ActionListener<>() {
 
                         @Override
                         public void onResponse(SearchResponse searchResponse) {
@@ -176,7 +195,8 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                                     new SearchConfiguration(
                                         source.get("id").toString(),
                                         source.get("search_configuration_name").toString(),
-                                        source.get("query_body").toString()
+                                        source.get("query_body").toString(),
+                                        source.get("timestamp").toString()
                                     )
                                 );
                             }
@@ -218,6 +238,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
             // Creating a new query set by sampling the UBI queries.
             if (request.method().equals(RestRequest.Method.POST)) {
 
+                // TODO: Perhaps these parameters are better passed in the body instead of as query params.
                 final String name = request.param("name");
                 final String description = request.param("description");
                 final String sampling = request.param("sampling", "pptss");
@@ -318,6 +339,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
 
         } else if (EXPERIMENTS_URL.equalsIgnoreCase(request.path())) {
 
+            // TODO: Perhaps these parameters are better passed in the body instead of as query params.
             final String querySetId = request.param("id");
             final String judgmentsId = request.param("judgments_id");
             final String index = request.param("index");

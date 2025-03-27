@@ -19,14 +19,18 @@ public class SearchConfiguration {
     @JsonProperty("query_body")
     private String queryBody;
 
+    @JsonProperty("timestamp")
+    private String timestamp;
+
     public SearchConfiguration() {
 
     }
 
-    public SearchConfiguration(final String id, final String searchConfigurationName, final String queryBody) {
+    public SearchConfiguration(final String id, final String searchConfigurationName, final String queryBody, final String timestamp) {
         this.id = id;
         this.searchConfigurationName = searchConfigurationName;
         this.queryBody = queryBody;
+        this.timestamp = timestamp;
     }
 
     public String getSearchConfigurationName() {
@@ -51,6 +55,14 @@ public class SearchConfiguration {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
     }
 
 }

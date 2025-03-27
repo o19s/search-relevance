@@ -37,11 +37,14 @@ import org.opensearch.index.query.WrapperQueryBuilder;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.SearchHits;
 import org.opensearch.search.builder.SearchSourceBuilder;
+import org.opensearch.search.sort.FieldSortBuilder;
+import org.opensearch.search.sort.SortOrder;
 import org.opensearch.searchrelevance.plugin.Constants;
 import org.opensearch.searchrelevance.plugin.judgments.model.ClickthroughRate;
 import org.opensearch.searchrelevance.plugin.judgments.model.Judgment;
 import org.opensearch.searchrelevance.plugin.judgments.model.SearchConfiguration;
 import org.opensearch.searchrelevance.plugin.judgments.model.ubi.query.UbiQuery;
+import org.opensearch.searchrelevance.plugin.model.GetSearchConfigurationsRequest;
 import org.opensearch.searchrelevance.plugin.utils.TimeUtils;
 import org.opensearch.transport.client.Client;
 
@@ -422,6 +425,7 @@ public class OpenSearchHelper {
         jsonMap.put("search_configuration_name", searchConfiguration.getSearchConfigurationName());
         jsonMap.put("query_body", searchConfiguration.getQueryBody());
         jsonMap.put("id", searchConfigurationId);
+        jsonMap.put("timestamp", TimeUtils.getTimestamp());
 
         final IndexRequest indexRequest = new IndexRequest(Constants.SEARCH_CONFIGURATIONS_INDEX_NAME).id(searchConfigurationId)
             .source(jsonMap);
@@ -430,7 +434,7 @@ public class OpenSearchHelper {
 
     }
 
-    public void deleteSearchConfiguration(final String searchConfigurationId, ActionListener<DeleteResponse> listener) {
+    public void deleteSearchConfiguration(final String searchConfigurationId, final ActionListener<DeleteResponse> listener) {
 
         LOGGER.info("Deleting search configuration with ID: {}", searchConfigurationId);
 
@@ -439,12 +443,20 @@ public class OpenSearchHelper {
 
     }
 
-    public void getSearchConfigurations(ActionListener<SearchResponse> listener) {
-
-        // TODO: #16 Add support for timestamp sorting and limiting the size.
+    public void getSearchConfigurations(
+        final GetSearchConfigurationsRequest getSearchConfigurationsRequest,
+        final ActionListener<SearchResponse> listener
+    ) {
 
         final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+        searchSourceBuilder.size(getSearchConfigurationsRequest.getSize());
+
+        searchSourceBuilder.sort(
+            new FieldSortBuilder("timestamp").order(
+                SortOrder.fromString(getSearchConfigurationsRequest.getSort().getTimestamp().getOrder())
+            )
+        );
 
         final SearchRequest searchRequest = new SearchRequest(Constants.SEARCH_CONFIGURATIONS_INDEX_NAME);
         searchRequest.source(searchSourceBuilder);
