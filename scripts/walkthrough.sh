@@ -1,21 +1,24 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# The OpenSearch Contributors require contributions made to
+# this file be licensed under the Apache-2.0 license or a
+# compatible open source license.
+
 #!/bin/bash -e
 
 # Example walkthrough end-to-end for the plugin.
 
 # Delete existing UBI indexes and create new ones.
-curl -s -X DELETE "http://localhost:9200/ubi_queries,ubi_events"
-curl -s -X POST "http://localhost:9200/_plugins/ubi/initialize"
+./initialize-ubi-indexes.sh
 
-# IMPORTANT: Now index data (UBI and ESCI).
+# Index the ESCI data.
+(cd ../data/esci/; ./index.sh)
 
 # Create judgments.
 curl -s -X POST "http://localhost:9200/_plugins/search_relevance/judgments?click_model=coec&max_rank=20"
 
 # Create a query set.
-curl -s -X POST "http://localhost:9200/_plugins/search_relevance/queryset?name=test&description=fake&sampling=pptss&query_set_size=100"
+QUERY_SET_ID=`curl -s -X POST "http://localhost:9200/_plugins/search_relevance/query_sets?name=test&description=fake&sampling=pptss&query_set_size=100" | jq -r .query_set`
 
 # Run the query set.
 ./run-query-set.sh ${QUERY_SET_ID}
-
-# Look at the results.
-curl -s "http://localhost:9200/search_relevance/_search" | jq

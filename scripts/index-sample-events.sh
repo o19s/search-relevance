@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# The OpenSearch Contributors require contributions made to
+# this file be licensed under the Apache-2.0 license or a
+# compatible open source license.
+
 curl -s -X DELETE http://localhost:9200/ubi_events,ubi_queries
 
 curl -s -X POST http://localhost:9200/_plugins/ubi/initialize
