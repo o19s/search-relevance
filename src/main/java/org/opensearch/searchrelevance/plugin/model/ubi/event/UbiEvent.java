@@ -14,6 +14,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class UbiEvent {
 
+    @JsonProperty("user_id")
+    private String userId;
+
     @JsonProperty("action_name")
     private String actionName;
 
@@ -23,8 +26,23 @@ public class UbiEvent {
     @JsonProperty("query_id")
     private String queryId;
 
+    @JsonProperty("session_id")
+    private String sessionId;
+
+    @JsonProperty("application")
+    private String application;
+
     @JsonProperty("event_attributes")
     private EventAttributes eventAttributes;
+
+    @JsonProperty("user_query")
+    private String userQuery;
+
+    @JsonProperty("message_type")
+    private String messageType;
+
+    @JsonProperty("message")
+    private String message;
 
     /**
      * Creates a new representation of an UBI event.
@@ -84,6 +102,46 @@ public class UbiEvent {
      */
     public void setEventAttributes(EventAttributes eventAttributes) {
         this.eventAttributes = eventAttributes;
+    }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    public String getApplication() {
+        return application;
+    }
+
+    public void setApplication(String application) {
+        this.application = application;
+    }
+
+    public String getUserQuery() {
+        return userQuery;
+    }
+
+    public void setUserQuery(String userQuery) {
+        this.userQuery = userQuery;
+    }
+
+    public String getMessageType() {
+        return messageType;
+    }
+
+    public void setMessageType(String messageType) {
+        this.messageType = messageType;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 
 }

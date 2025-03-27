@@ -7,6 +7,7 @@
  */
 package org.opensearch.searchrelevance.plugin.model.ubi.query;
 
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -34,8 +35,11 @@ public class UbiQuery {
     @JsonProperty("query_attributes")
     private Map<String, String> queryAttributes;
 
-    @JsonProperty("query_response")
-    private QueryResponse queryResponse;
+    @JsonProperty("query_response_id")
+    private String queryResponseId;
+
+    @JsonProperty("query_response_hit_ids")
+    private List<String> queryResponseHitIds;
 
     /**
      * Creates a new UBI query object.
@@ -140,20 +144,20 @@ public class UbiQuery {
         this.queryAttributes = queryAttributes;
     }
 
-    /**
-     * Gets the query responses.
-     * @return The query responses.
-     */
-    public QueryResponse getQueryResponse() {
-        return queryResponse;
+    public String getQueryResponseId() {
+        return queryResponseId;
     }
 
-    /**
-     * Sets the query responses.
-     * @param queryResponse The query responses.
-     */
-    public void setQueryResponse(QueryResponse queryResponse) {
-        this.queryResponse = queryResponse;
+    public void setQueryResponseId(String queryResponseId) {
+        this.queryResponseId = queryResponseId;
+    }
+
+    public List<String> getQueryResponseHitIds() {
+        return queryResponseHitIds;
+    }
+
+    public void setQueryResponseHitIds(List<String> queryResponseHitIds) {
+        this.queryResponseHitIds = queryResponseHitIds;
     }
 
 }
