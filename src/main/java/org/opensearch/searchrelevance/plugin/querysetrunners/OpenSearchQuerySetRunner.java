@@ -217,10 +217,10 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
             for (final SearchMetric searchMetric : queryResult.getSearchMetrics()) {
 
                 final Map<String, Object> metrics = new HashMap<>();
-                metrics.put("datetime", timestamp);
+                metrics.put("timestamp", timestamp);
                 metrics.put("search_config", "research_1");
                 metrics.put("query_set_id", result.getQuerySetId());
-                metrics.put("query", queryResult.getQuery());
+                metrics.put("user_query", queryResult.getQuery());
                 metrics.put("metric", searchMetric.getName());
                 metrics.put("value", searchMetric.getValue());
                 metrics.put("application", "sample_data");
