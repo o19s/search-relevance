@@ -7,14 +7,14 @@
  */
 package org.opensearch.searchrelevance.plugin.model.ubi.event;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * A position represents the location of a search result in an event.
  */
 public class Position {
 
-    @SerializedName("ordinal")
+    @JsonProperty("ordinal")
     private int ordinal;
 
     @Override

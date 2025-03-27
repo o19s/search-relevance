@@ -7,14 +7,14 @@
  */
 package org.opensearch.searchrelevance.plugin.model.ubi.event;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class EventObject {
 
-    @SerializedName("object_id_field")
+    @JsonProperty("object_id_field")
     private String objectIdField;
 
-    @SerializedName("object_id")
+    @JsonProperty("object_id")
     private String objectId;
 
     @Override

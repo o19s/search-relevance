@@ -9,32 +9,32 @@ package org.opensearch.searchrelevance.plugin.model.ubi.query;
 
 import java.util.Map;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Represents a UBI query.
  */
 public class UbiQuery {
 
-    @SerializedName("timestamp")
+    @JsonProperty("timestamp")
     private String timestamp;
 
-    @SerializedName("query_id")
+    @JsonProperty("query_id")
     private String queryId;
 
-    @SerializedName("client_id")
+    @JsonProperty("client_id")
     private String clientId;
 
-    @SerializedName("user_query")
+    @JsonProperty("user_query")
     private String userQuery;
 
-    @SerializedName("query")
+    @JsonProperty("query")
     private String query;
 
-    @SerializedName("query_attributes")
+    @JsonProperty("query_attributes")
     private Map<String, String> queryAttributes;
 
-    @SerializedName("query_response")
+    @JsonProperty("query_response")
     private QueryResponse queryResponse;
 
     /**

@@ -44,10 +44,9 @@ import org.opensearch.searchrelevance.plugin.model.GetSearchConfigurationsReques
 import org.opensearch.searchrelevance.plugin.model.Judgment;
 import org.opensearch.searchrelevance.plugin.model.SearchConfiguration;
 import org.opensearch.searchrelevance.plugin.model.ubi.query.UbiQuery;
+import org.opensearch.searchrelevance.plugin.utils.JsonUtils;
 import org.opensearch.searchrelevance.plugin.utils.TimeUtils;
 import org.opensearch.transport.client.Client;
-
-import com.google.gson.Gson;
 
 /**
  * Functionality for interacting with OpenSearch.
@@ -57,7 +56,6 @@ public class OpenSearchEngine implements SearchEngine {
     private static final Logger LOGGER = LogManager.getLogger(OpenSearchEngine.class.getName());
 
     private final Client client;
-    private final Gson gson = new Gson();
 
     // Used to cache the query ID->user_query to avoid unnecessary lookups to OpenSearch.
     private static final Map<String, String> userQueryCache = new HashMap<>();
@@ -118,7 +116,7 @@ public class OpenSearchEngine implements SearchEngine {
         if (response.getHits().getHits() != null & response.getHits().getHits().length > 0) {
 
             final SearchHit hit = response.getHits().getHits()[0];
-            return gson.fromJson(hit.getSourceAsString(), UbiQuery.class);
+            return JsonUtils.fromJson(hit.getSourceAsString(), UbiQuery.class);
 
         } else {
 

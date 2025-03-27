@@ -39,11 +39,10 @@ import org.opensearch.searchrelevance.plugin.judgments.queryhash.IncrementalUser
 import org.opensearch.searchrelevance.plugin.model.ClickthroughRate;
 import org.opensearch.searchrelevance.plugin.model.Judgment;
 import org.opensearch.searchrelevance.plugin.model.ubi.event.UbiEvent;
+import org.opensearch.searchrelevance.plugin.utils.JsonUtils;
 import org.opensearch.searchrelevance.plugin.utils.MathUtils;
 import org.opensearch.transport.client.Client;
 import org.opensearch.transport.client.Requests;
-
-import com.google.gson.Gson;
 
 public class CoecClickModel extends ClickModel {
 
@@ -58,7 +57,6 @@ public class CoecClickModel extends ClickModel {
     private final OpenSearchEngine openSearchEngine;
 
     private final IncrementalUserQueryHash incrementalUserQueryHash = new IncrementalUserQueryHash();
-    private final Gson gson = new Gson();
     private final Client client;
 
     private static final Logger LOGGER = LogManager.getLogger(CoecClickModel.class.getName());
@@ -234,8 +232,7 @@ public class CoecClickModel extends ClickModel {
 
             for (final SearchHit hit : searchHits) {
 
-                // TODO: Remove gson dependency.
-                final UbiEvent ubiEvent = gson.fromJson(hit.getSourceAsString(), UbiEvent.class);
+                final UbiEvent ubiEvent = JsonUtils.fromJson(hit.getSourceAsString(), UbiEvent.class);
 
                 // We need to the hash of the query_id because two users can both search
                 // for "computer" and those searches will have different query IDs, but they are the same search.

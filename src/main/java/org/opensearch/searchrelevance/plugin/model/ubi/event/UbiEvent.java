@@ -7,23 +7,23 @@
  */
 package org.opensearch.searchrelevance.plugin.model.ubi.event;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Creates a representation of a UBI event.
  */
 public class UbiEvent {
 
-    @SerializedName("action_name")
+    @JsonProperty("action_name")
     private String actionName;
 
-    @SerializedName("client_id")
+    @JsonProperty("client_id")
     private String clientId;
 
-    @SerializedName("query_id")
+    @JsonProperty("query_id")
     private String queryId;
 
-    @SerializedName("event_attributes")
+    @JsonProperty("event_attributes")
     private EventAttributes eventAttributes;
 
     /**
