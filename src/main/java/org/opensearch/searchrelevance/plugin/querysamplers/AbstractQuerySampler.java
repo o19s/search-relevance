@@ -5,7 +5,7 @@
  * this file be licensed under the Apache-2.0 license or a
  * compatible open source license.
  */
-package org.opensearch.searchrelevance.plugin.samplers;
+package org.opensearch.searchrelevance.plugin.querysamplers;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,7 +19,7 @@ import org.opensearch.action.index.IndexResponse;
 import org.opensearch.action.support.WriteRequest;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.searchrelevance.plugin.Constants;
-import org.opensearch.searchrelevance.plugin.judgments.opensearch.OpenSearchHelper;
+import org.opensearch.searchrelevance.plugin.engines.OpenSearchEngine;
 import org.opensearch.searchrelevance.plugin.utils.TimeUtils;
 
 /**
@@ -29,10 +29,10 @@ public abstract class AbstractQuerySampler {
 
     private static final Logger LOGGER = LogManager.getLogger(AbstractQuerySampler.class);
 
-    protected final OpenSearchHelper openSearchHelper;
+    protected final OpenSearchEngine openSearchEngine;
 
-    public AbstractQuerySampler(final OpenSearchHelper openSearchHelper) {
-        this.openSearchHelper = openSearchHelper;
+    public AbstractQuerySampler(final OpenSearchEngine openSearchEngine) {
+        this.openSearchEngine = openSearchEngine;
     }
 
     /**
@@ -80,14 +80,14 @@ public abstract class AbstractQuerySampler {
         querySet.put("queries", querySetQueries);
         querySet.put("timestamp", TimeUtils.getTimestamp());
 
-        openSearchHelper.createIndexIfNotExists(Constants.QUERY_SETS_INDEX_NAME, Constants.QUERY_SETS_INDEX_MAPPING);
+        openSearchEngine.createIndexIfNotExists(Constants.QUERY_SETS_INDEX_NAME, Constants.QUERY_SETS_INDEX_MAPPING);
 
         final IndexRequest indexRequest = new IndexRequest().index(Constants.QUERY_SETS_INDEX_NAME)
             .id(querySetId)
             .source(querySet)
             .setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
 
-        openSearchHelper.getClient().index(indexRequest, new ActionListener<>() {
+        openSearchEngine.getClient().index(indexRequest, new ActionListener<>() {
 
             @Override
             public void onResponse(IndexResponse indexResponse) {

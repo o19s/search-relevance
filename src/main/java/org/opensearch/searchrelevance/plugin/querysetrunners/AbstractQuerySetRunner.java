@@ -5,7 +5,7 @@
  * this file be licensed under the Apache-2.0 license or a
  * compatible open source license.
  */
-package org.opensearch.searchrelevance.plugin.runners;
+package org.opensearch.searchrelevance.plugin.querysetrunners;
 
 import static org.opensearch.searchrelevance.plugin.Constants.JUDGMENTS_INDEX_NAME;
 import static org.opensearch.searchrelevance.plugin.Constants.QUERY_SETS_INDEX_NAME;
@@ -22,7 +22,7 @@ import org.opensearch.action.search.SearchResponse;
 import org.opensearch.index.query.BoolQueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.builder.SearchSourceBuilder;
-import org.opensearch.transport.client.Client;
+import org.opensearch.searchrelevance.plugin.engines.OpenSearchEngine;
 
 /**
  * Base class for query set runners. Classes that extend this class
@@ -32,10 +32,10 @@ public abstract class AbstractQuerySetRunner {
 
     private static final Logger LOGGER = LogManager.getLogger(AbstractQuerySetRunner.class);
 
-    protected final Client client;
+    protected final OpenSearchEngine openSearchEngine;
 
-    public AbstractQuerySetRunner(final Client client) {
-        this.client = client;
+    public AbstractQuerySetRunner(final OpenSearchEngine openSearchEngine) {
+        this.openSearchEngine = openSearchEngine;
     }
 
     /**
@@ -88,7 +88,7 @@ public abstract class AbstractQuerySetRunner {
         final SearchRequest searchRequest = new SearchRequest(QUERY_SETS_INDEX_NAME).source(sourceBuilder);
 
         // TODO: Don't use .get()
-        final SearchResponse searchResponse = client.search(searchRequest).get();
+        final SearchResponse searchResponse = openSearchEngine.getClient().search(searchRequest).get();
 
         if (searchResponse.getHits().getHits().length > 0) {
 
@@ -138,7 +138,7 @@ public abstract class AbstractQuerySetRunner {
 
         Double judgment = Double.NaN;
 
-        final SearchResponse searchResponse = client.search(searchRequest).get();
+        final SearchResponse searchResponse = openSearchEngine.getClient().search(searchRequest).get();
 
         if (searchResponse.getHits().getHits().length > 0) {
 

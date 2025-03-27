@@ -5,7 +5,7 @@
  * this file be licensed under the Apache-2.0 license or a
  * compatible open source license.
  */
-package org.opensearch.searchrelevance.plugin.samplers;
+package org.opensearch.searchrelevance.plugin.querysamplers;
 
 import static org.opensearch.searchrelevance.plugin.Constants.UBI_QUERIES_INDEX_NAME;
 
@@ -26,7 +26,7 @@ import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.Scroll;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.builder.SearchSourceBuilder;
-import org.opensearch.searchrelevance.plugin.judgments.opensearch.OpenSearchHelper;
+import org.opensearch.searchrelevance.plugin.engines.OpenSearchEngine;
 import org.opensearch.transport.client.node.NodeClient;
 
 /**
@@ -49,11 +49,11 @@ public class ProbabilityProportionalToSizeQuerySampler extends AbstractQuerySamp
      * @param parameters The {@link ProbabilityProportionalToSizeQuerySamplerParameters parameters} for the sampling.
      */
     public ProbabilityProportionalToSizeQuerySampler(
-        final OpenSearchHelper openSearchHelper,
+        final OpenSearchEngine openSearchEngine,
         final NodeClient client,
         final ProbabilityProportionalToSizeQuerySamplerParameters parameters
     ) {
-        super(openSearchHelper);
+        super(openSearchEngine);
         this.client = client;
         this.parameters = parameters;
     }

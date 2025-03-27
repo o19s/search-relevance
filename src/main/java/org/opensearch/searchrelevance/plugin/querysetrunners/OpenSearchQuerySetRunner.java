@@ -5,7 +5,7 @@
  * this file be licensed under the Apache-2.0 license or a
  * compatible open source license.
  */
-package org.opensearch.searchrelevance.plugin.runners;
+package org.opensearch.searchrelevance.plugin.querysetrunners;
 
 import static org.opensearch.searchrelevance.plugin.Constants.QUERY_PLACEHOLDER;
 
@@ -28,13 +28,12 @@ import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.builder.SearchSourceBuilder;
 import org.opensearch.searchrelevance.plugin.Constants;
-import org.opensearch.searchrelevance.plugin.judgments.opensearch.OpenSearchHelper;
+import org.opensearch.searchrelevance.plugin.engines.OpenSearchEngine;
 import org.opensearch.searchrelevance.plugin.metrics.DcgSearchMetric;
 import org.opensearch.searchrelevance.plugin.metrics.NdcgSearchMetric;
 import org.opensearch.searchrelevance.plugin.metrics.PrecisionSearchMetric;
 import org.opensearch.searchrelevance.plugin.metrics.SearchMetric;
 import org.opensearch.searchrelevance.plugin.utils.TimeUtils;
-import org.opensearch.transport.client.Client;
 
 /**
  * A {@link AbstractQuerySetRunner} for Amazon OpenSearch.
@@ -43,16 +42,11 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
 
     private static final Logger LOGGER = LogManager.getLogger(OpenSearchQuerySetRunner.class);
 
-    private final OpenSearchHelper openSearchHelper;
-
     /**
      * Creates a new query set runner
-     *
-     * @param client An OpenSearch {@link Client}.
      */
-    public OpenSearchQuerySetRunner(final Client client, final OpenSearchHelper openSearchHelper) {
-        super(client);
-        this.openSearchHelper = openSearchHelper;
+    public OpenSearchQuerySetRunner(final OpenSearchEngine openSearchEngine) {
+        super(openSearchEngine);
     }
 
     @Override
@@ -108,7 +102,7 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
                     // TODO: Look at using the Workload Management in 2.18.0.
                     Thread.sleep(50);
 
-                    client.search(searchRequest, new ActionListener<>() {
+                    openSearchEngine.getClient().search(searchRequest, new ActionListener<>() {
 
                         @Override
                         public void onResponse(final SearchResponse searchResponse) {
@@ -213,7 +207,7 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
         // See https://github.com/o19s/opensearch-search-quality-evaluation/blob/main/opensearch-dashboard-prototyping/METRICS_SCHEMA.md
         // See https://github.com/o19s/opensearch-search-quality-evaluation/blob/main/opensearch-dashboard-prototyping/sample_data.ndjson
 
-        openSearchHelper.createIndexIfNotExists(Constants.METRICS_INDEX_NAME, Constants.METRICS_INDEX_MAPPING);
+        openSearchEngine.createIndexIfNotExists(Constants.METRICS_INDEX_NAME, Constants.METRICS_INDEX_MAPPING);
 
         final BulkRequest bulkRequest = new BulkRequest();
         final String timestamp = TimeUtils.getTimestamp();
@@ -241,7 +235,7 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
 
         }
 
-        client.bulk(bulkRequest, new ActionListener<>() {
+        openSearchEngine.getClient().bulk(bulkRequest, new ActionListener<>() {
 
             @Override
             public void onResponse(BulkResponse bulkItemResponses) {

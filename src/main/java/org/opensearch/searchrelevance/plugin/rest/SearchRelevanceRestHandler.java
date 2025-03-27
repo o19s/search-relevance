@@ -30,19 +30,19 @@ import org.opensearch.rest.BytesRestResponse;
 import org.opensearch.rest.RestRequest;
 import org.opensearch.search.SearchHit;
 import org.opensearch.searchrelevance.plugin.Constants;
+import org.opensearch.searchrelevance.plugin.engines.OpenSearchEngine;
 import org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClickModel;
 import org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClickModelParameters;
-import org.opensearch.searchrelevance.plugin.judgments.opensearch.OpenSearchHelper;
 import org.opensearch.searchrelevance.plugin.model.GetSearchConfigurationsRequest;
 import org.opensearch.searchrelevance.plugin.model.SearchConfiguration;
-import org.opensearch.searchrelevance.plugin.runners.OpenSearchQuerySetRunner;
-import org.opensearch.searchrelevance.plugin.runners.QuerySetRunResult;
-import org.opensearch.searchrelevance.plugin.samplers.ProbabilityProportionalToSizeQuerySampler;
-import org.opensearch.searchrelevance.plugin.samplers.ProbabilityProportionalToSizeQuerySamplerParameters;
-import org.opensearch.searchrelevance.plugin.samplers.RandomQuerySampler;
-import org.opensearch.searchrelevance.plugin.samplers.RandomQuerySamplerParameters;
-import org.opensearch.searchrelevance.plugin.samplers.TopNQuerySampler;
-import org.opensearch.searchrelevance.plugin.samplers.TopNQuerySamplerParameters;
+import org.opensearch.searchrelevance.plugin.querysamplers.ProbabilityProportionalToSizeQuerySampler;
+import org.opensearch.searchrelevance.plugin.querysamplers.ProbabilityProportionalToSizeQuerySamplerParameters;
+import org.opensearch.searchrelevance.plugin.querysamplers.RandomQuerySampler;
+import org.opensearch.searchrelevance.plugin.querysamplers.RandomQuerySamplerParameters;
+import org.opensearch.searchrelevance.plugin.querysamplers.TopNQuerySampler;
+import org.opensearch.searchrelevance.plugin.querysamplers.TopNQuerySamplerParameters;
+import org.opensearch.searchrelevance.plugin.querysetrunners.OpenSearchQuerySetRunner;
+import org.opensearch.searchrelevance.plugin.querysetrunners.QuerySetRunResult;
 import org.opensearch.transport.client.node.NodeClient;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -79,7 +79,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
     @Override
     protected RestChannelConsumer prepareRequest(RestRequest request, NodeClient client) {
 
-        final OpenSearchHelper openSearchHelper = new OpenSearchHelper(client);
+        final OpenSearchEngine openSearchEngine = new OpenSearchEngine(client);
 
         final String rawPath = request.rawPath();
         LOGGER.info("rawPath = {}", rawPath);
@@ -101,7 +101,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                     }
                 );
 
-                openSearchHelper.createIndexIfNotExists(
+                openSearchEngine.createIndexIfNotExists(
                     Constants.SEARCH_CONFIGURATIONS_INDEX_NAME,
                     Constants.SEARCH_CONFIGURATIONS_INDEX_MAPPING
                 );
@@ -109,7 +109,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                 final String searchConfigurationId = UUID.randomUUID().toString();
 
                 return (channel) -> {
-                    openSearchHelper.indexSearchConfiguration(searchConfigurationId, searchConfiguration, new ActionListener<>() {
+                    openSearchEngine.indexSearchConfiguration(searchConfigurationId, searchConfiguration, new ActionListener<>() {
 
                         @Override
                         public void onResponse(IndexResponse indexResponse) {
@@ -134,7 +134,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
 
                 return (channel) -> {
 
-                    openSearchHelper.deleteSearchConfiguration(searchConfigurationId, new ActionListener<>() {
+                    openSearchEngine.deleteSearchConfiguration(searchConfigurationId, new ActionListener<>() {
 
                         @Override
                         public void onResponse(DeleteResponse deleteResponse) {
@@ -180,7 +180,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                 }
 
                 return (channel) -> {
-                    openSearchHelper.getSearchConfigurations(getSearchConfigurationsRequest, new ActionListener<>() {
+                    openSearchEngine.getSearchConfigurations(getSearchConfigurationsRequest, new ActionListener<>() {
 
                         @Override
                         public void onResponse(SearchResponse searchResponse) {
@@ -252,7 +252,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                     final ProbabilityProportionalToSizeQuerySamplerParameters parameters =
                         new ProbabilityProportionalToSizeQuerySamplerParameters(name, description, sampling, querySetSize);
                     final ProbabilityProportionalToSizeQuerySampler sampler = new ProbabilityProportionalToSizeQuerySampler(
-                        openSearchHelper,
+                        openSearchEngine,
                         client,
                         parameters
                     );
@@ -283,7 +283,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                         querySetSize
                     );
 
-                    final RandomQuerySampler sampler = new RandomQuerySampler(openSearchHelper, parameters);
+                    final RandomQuerySampler sampler = new RandomQuerySampler(openSearchEngine, parameters);
 
                     try {
 
@@ -306,7 +306,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
 
                     final TopNQuerySamplerParameters parameters = new TopNQuerySamplerParameters(name, description, sampling, querySetSize);
 
-                    final TopNQuerySampler sampler = new TopNQuerySampler(openSearchHelper, parameters);
+                    final TopNQuerySampler sampler = new TopNQuerySampler(openSearchEngine, parameters);
 
                     try {
 
@@ -383,7 +383,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
 
             try {
 
-                final OpenSearchQuerySetRunner openSearchQuerySetRunner = new OpenSearchQuerySetRunner(client, openSearchHelper);
+                final OpenSearchQuerySetRunner openSearchQuerySetRunner = new OpenSearchQuerySetRunner(openSearchEngine);
                 final QuerySetRunResult querySetRunResult = openSearchQuerySetRunner.run(
                     querySetId,
                     judgmentsId,
@@ -424,7 +424,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                     // TODO: Run this in a separate thread.
                     try {
 
-                        openSearchHelper.createIndexIfNotExists(Constants.JUDGMENTS_INDEX_NAME, Constants.JUDGMENTS_INDEX_MAPPING);
+                        openSearchEngine.createIndexIfNotExists(Constants.JUDGMENTS_INDEX_NAME, Constants.JUDGMENTS_INDEX_MAPPING);
 
                         judgmentsId = coecClickModel.calculateJudgments();
 

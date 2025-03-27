@@ -5,7 +5,7 @@
  * this file be licensed under the Apache-2.0 license or a
  * compatible open source license.
  */
-package org.opensearch.searchrelevance.plugin.samplers;
+package org.opensearch.searchrelevance.plugin.querysamplers;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -28,7 +28,7 @@ import org.opensearch.search.SearchHit;
 import org.opensearch.search.builder.SearchSourceBuilder;
 import org.opensearch.search.collapse.CollapseBuilder;
 import org.opensearch.searchrelevance.plugin.Constants;
-import org.opensearch.searchrelevance.plugin.judgments.opensearch.OpenSearchHelper;
+import org.opensearch.searchrelevance.plugin.engines.OpenSearchEngine;
 
 /**
  * A sampler that randomly selects a given number of queries.
@@ -41,8 +41,8 @@ public class RandomQuerySampler extends AbstractQuerySampler {
 
     private final RandomQuerySamplerParameters parameters;
 
-    public RandomQuerySampler(final OpenSearchHelper openSearchHelper, final RandomQuerySamplerParameters parameters) {
-        super(openSearchHelper);
+    public RandomQuerySampler(final OpenSearchEngine openSearchEngine, final RandomQuerySamplerParameters parameters) {
+        super(openSearchEngine);
         this.parameters = parameters;
     }
 
@@ -80,7 +80,7 @@ public class RandomQuerySampler extends AbstractQuerySampler {
 
         final String querySetId = UUID.randomUUID().toString();
 
-        openSearchHelper.getClient().search(searchRequest, new ActionListener<>() {
+        openSearchEngine.getClient().search(searchRequest, new ActionListener<>() {
 
             @Override
             public void onResponse(SearchResponse searchResponse) {
@@ -94,7 +94,7 @@ public class RandomQuerySampler extends AbstractQuerySampler {
                     final String userQuery = (String) sourceAsMap.get(userQueryField);
 
                     // Add the user_query to the query set.
-                    final long count = openSearchHelper.getUserQueryCount(userQuery);
+                    final long count = openSearchEngine.getUserQueryCount(userQuery);
                     LOGGER.info("Adding user query to query set: {} with frequency {}", userQuery, count);
                     querySet.put(userQuery, count);
 

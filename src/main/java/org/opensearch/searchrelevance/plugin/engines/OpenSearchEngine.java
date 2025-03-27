@@ -5,9 +5,8 @@
  * this file be licensed under the Apache-2.0 license or a
  * compatible open source license.
  */
-package org.opensearch.searchrelevance.plugin.judgments.opensearch;
+package org.opensearch.searchrelevance.plugin.engines;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -52,11 +51,10 @@ import com.google.gson.Gson;
 
 /**
  * Functionality for interacting with OpenSearch.
- * TODO: Move these functions out of this class.
  */
-public class OpenSearchHelper {
+public class OpenSearchEngine implements SearchEngine {
 
-    private static final Logger LOGGER = LogManager.getLogger(OpenSearchHelper.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(OpenSearchEngine.class.getName());
 
     private final Client client;
     private final Gson gson = new Gson();
@@ -64,7 +62,7 @@ public class OpenSearchHelper {
     // Used to cache the query ID->user_query to avoid unnecessary lookups to OpenSearch.
     private static final Map<String, String> userQueryCache = new HashMap<>();
 
-    public OpenSearchHelper(final Client client) {
+    public OpenSearchEngine(final Client client) {
         this.client = client;
     }
 
@@ -72,15 +70,10 @@ public class OpenSearchHelper {
         return client;
     }
 
-    /**
-     * Gets the user query for a given query ID.
-     * @param queryId The query ID.
-     * @return The user query.
-     * @throws IOException Thrown when there is a problem accessing OpenSearch.
-     */
+    @Override
     public String getUserQuery(final String queryId) throws Exception {
 
-        // If it's in the cache just get it and return it.
+        // If it's in the cache, just get it and return it.
         if (userQueryCache.containsKey(queryId)) {
             return userQueryCache.get(queryId);
         }
@@ -102,12 +95,7 @@ public class OpenSearchHelper {
 
     }
 
-    /**
-     * Gets the query object for a given query ID.
-     * @param queryId The query ID.
-     * @return A {@link UbiQuery} object for the given query ID.
-     * @throws Exception Thrown if the query cannot be retrieved.
-     */
+    @Override
     public UbiQuery getQueryFromQueryId(final String queryId) throws Exception {
 
         LOGGER.debug("Getting query from query ID {}", queryId);
@@ -126,7 +114,7 @@ public class OpenSearchHelper {
         final SearchRequest searchRequest = new SearchRequest(indexes, searchSourceBuilder);
         final SearchResponse response = client.search(searchRequest).get();
 
-        // If this does not return a query then we cannot calculate the judgments. Each even should have a query associated with it.
+        // If this does not return a query, then we cannot calculate the judgments. Each even should have a query associated with it.
         if (response.getHits().getHits() != null & response.getHits().getHits().length > 0) {
 
             final SearchHit hit = response.getHits().getHits()[0];
@@ -141,7 +129,8 @@ public class OpenSearchHelper {
 
     }
 
-    private Collection<String> getQueryIdsHavingUserQuery(final String userQuery) throws Exception {
+    @Override
+    public Collection<String> getQueryIdsHavingUserQuery(final String userQuery) throws Exception {
 
         final String query = "{\"match\": {\"user_query\": \"" + userQuery + "\" }}";
         final WrapperQueryBuilder qb = QueryBuilders.wrapperQuery(query);
@@ -165,6 +154,7 @@ public class OpenSearchHelper {
 
     }
 
+    @Override
     public long getCountOfQueriesForUserQueryHavingResultInRankR(final String userQuery, final String objectId, final int rank)
         throws Exception {
 
@@ -238,12 +228,8 @@ public class OpenSearchHelper {
 
     }
 
-    /**
-     * Index the rank-aggregated clickthrough values.
-     * @param rankAggregatedClickThrough A map of position to clickthrough values.
-     * @throws IOException Thrown when there is a problem accessing OpenSearch.
-     */
-    public void indexRankAggregatedClickthrough(final Map<Integer, Double> rankAggregatedClickThrough) throws Exception {
+    @Override
+    public void indexRankAggregatedClickthrough(final Map<Integer, Double> rankAggregatedClickThrough) {
 
         if (!rankAggregatedClickThrough.isEmpty()) {
 
@@ -265,17 +251,32 @@ public class OpenSearchHelper {
 
             }
 
-            client.bulk(request).get();
+            client.bulk(request, new ActionListener<>() {
+
+                @Override
+                public void onResponse(BulkResponse bulkItemResponses) {
+                    if (bulkItemResponses.hasFailures()) {
+                        LOGGER.error(
+                            "Rank-aggregated clickthrough were not all successfully indexed: {}",
+                            bulkItemResponses.buildFailureMessage()
+                        );
+                    } else {
+                        LOGGER.debug("ank-aggregated clickthrough has been successfully indexed.");
+                    }
+                }
+
+                @Override
+                public void onFailure(Exception ex) {
+                    LOGGER.error("Indexing the rank-aggregated clickthrough failed.", ex);
+                }
+
+            });
 
         }
 
     }
 
-    /**
-     * Index the clickthrough rates.
-     * @param clickthroughRates A map of query IDs to a collection of {@link ClickthroughRate} objects.
-     * @throws IOException Thrown when there is a problem accessing OpenSearch.
-     */
+    @Override
     public void indexClickthroughRates(final Map<String, Set<ClickthroughRate>> clickthroughRates) throws Exception {
 
         if (!clickthroughRates.isEmpty()) {
@@ -324,12 +325,7 @@ public class OpenSearchHelper {
 
     }
 
-    /**
-     * Index the judgments.
-     * @param judgments A collection of {@link Judgment judgments}.
-     * @throws IOException Thrown when there is a problem accessing OpenSearch.
-     * @return The ID of the indexed judgments.
-     */
+    @Override
     public String indexJudgments(final Collection<Judgment> judgments) throws Exception {
 
         final String judgmentsId = UUID.randomUUID().toString();
@@ -356,6 +352,7 @@ public class OpenSearchHelper {
 
     }
 
+    @Override
     public void createIndexIfNotExists(final String indexName, final String indexMapping) {
 
         final IndicesExistsRequest indicesExistsRequest = new IndicesExistsRequest(indexName);
@@ -396,6 +393,7 @@ public class OpenSearchHelper {
 
     }
 
+    @Override
     public long getUserQueryCount(final String userQuery) {
 
         final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -415,6 +413,7 @@ public class OpenSearchHelper {
 
     }
 
+    @Override
     public void indexSearchConfiguration(
         final String searchConfigurationId,
         final SearchConfiguration searchConfiguration,
@@ -434,6 +433,7 @@ public class OpenSearchHelper {
 
     }
 
+    @Override
     public void deleteSearchConfiguration(final String searchConfigurationId, final ActionListener<DeleteResponse> listener) {
 
         LOGGER.info("Deleting search configuration with ID: {}", searchConfigurationId);
@@ -443,6 +443,7 @@ public class OpenSearchHelper {
 
     }
 
+    @Override
     public void getSearchConfigurations(
         final GetSearchConfigurationsRequest getSearchConfigurationsRequest,
         final ActionListener<SearchResponse> listener

@@ -5,7 +5,7 @@
  * this file be licensed under the Apache-2.0 license or a
  * compatible open source license.
  */
-package org.opensearch.searchrelevance.plugin.samplers;
+package org.opensearch.searchrelevance.plugin.querysamplers;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -25,7 +25,7 @@ import org.opensearch.search.aggregations.AggregationBuilders;
 import org.opensearch.search.aggregations.bucket.terms.Terms;
 import org.opensearch.search.builder.SearchSourceBuilder;
 import org.opensearch.searchrelevance.plugin.Constants;
-import org.opensearch.searchrelevance.plugin.judgments.opensearch.OpenSearchHelper;
+import org.opensearch.searchrelevance.plugin.engines.OpenSearchEngine;
 import org.opensearch.searchrelevance.plugin.utils.TimeUtils;
 
 /**
@@ -40,8 +40,8 @@ public class TopNQuerySampler extends AbstractQuerySampler {
     private static final String USER_QUERY_FIELD = "user_query";
     private final TopNQuerySamplerParameters parameters;
 
-    public TopNQuerySampler(final OpenSearchHelper openSearchHelper, final TopNQuerySamplerParameters parameters) {
-        super(openSearchHelper);
+    public TopNQuerySampler(final OpenSearchEngine openSearchEngine, final TopNQuerySamplerParameters parameters) {
+        super(openSearchEngine);
         this.parameters = parameters;
     }
 
@@ -70,7 +70,7 @@ public class TopNQuerySampler extends AbstractQuerySampler {
 
         final SearchRequest searchRequest = new SearchRequest(Constants.UBI_QUERIES_INDEX_NAME).source(searchSourceBuilder);
 
-        final SearchResponse searchResponse = openSearchHelper.getClient().search(searchRequest).actionGet();
+        final SearchResponse searchResponse = openSearchEngine.getClient().search(searchRequest).actionGet();
 
         final Terms byUserQuery = searchResponse.getAggregations().get("By_User_Query");
         List<? extends Terms.Bucket> byActionBuckets = byUserQuery.getBuckets();
@@ -83,7 +83,7 @@ public class TopNQuerySampler extends AbstractQuerySampler {
         LOGGER.info("Indexing query set containing {} queries.", querySet.size());
 
         // Index the query set and return its ID.
-        openSearchHelper.createIndexIfNotExists(Constants.QUERY_SETS_INDEX_NAME, Constants.QUERY_SETS_INDEX_MAPPING);
+        openSearchEngine.createIndexIfNotExists(Constants.QUERY_SETS_INDEX_NAME, Constants.QUERY_SETS_INDEX_MAPPING);
 
         final String querySetId = UUID.randomUUID().toString();
         final String timestamp = TimeUtils.getTimestamp();
@@ -98,7 +98,7 @@ public class TopNQuerySampler extends AbstractQuerySampler {
 
         final IndexRequest indexRequest = new IndexRequest(Constants.QUERY_SETS_INDEX_NAME).id(querySetId).source(jsonMap);
 
-        openSearchHelper.getClient().index(indexRequest).actionGet();
+        openSearchEngine.getClient().index(indexRequest).actionGet();
 
         return querySetId;
 
