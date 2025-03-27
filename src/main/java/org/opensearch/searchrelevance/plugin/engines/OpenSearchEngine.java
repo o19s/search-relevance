@@ -343,8 +343,22 @@ public class OpenSearchEngine implements SearchEngine {
 
         }
 
-        // TODO: Don't use .get()
-        client.bulk(bulkRequest).get();
+        client.bulk(bulkRequest, new ActionListener<>() {
+
+            @Override
+            public void onResponse(BulkResponse bulkItemResponses) {
+                if (bulkItemResponses.hasFailures()) {
+                    LOGGER.error("Judgments were not all successfully indexed: {}", bulkItemResponses.buildFailureMessage());
+                } else {
+                    LOGGER.debug("Judgments have been successfully indexed.");
+                }
+            }
+
+            @Override
+            public void onFailure(Exception ex) {
+                LOGGER.error("Indexing the judgments have failed.", ex);
+            }
+        });
 
         return judgmentsId;
 
