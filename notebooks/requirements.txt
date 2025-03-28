@@ -1,0 +1,2 @@
+ollama==0.4.7
+notebook==7.2.1
