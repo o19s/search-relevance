@@ -19,7 +19,6 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.opensearch.action.bulk.BulkRequest;
-import org.opensearch.action.bulk.BulkResponse;
 import org.opensearch.action.index.IndexRequest;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
@@ -242,19 +241,8 @@ public class OpenSearchQuerySetRunner extends AbstractQuerySetRunner {
 
         }
 
-        openSearchEngine.getClient().bulk(bulkRequest, new ActionListener<>() {
-
-            @Override
-            public void onResponse(BulkResponse bulkItemResponses) {
-                LOGGER.info("Successfully indexed {} metrics.", bulkItemResponses.getItems().length);
-            }
-
-            @Override
-            public void onFailure(Exception ex) {
-                LOGGER.error("Unable to bulk index metrics.", ex);
-            }
-
-        });
+        // TODO: Use async instead of sync.
+        openSearchEngine.getClient().bulk(bulkRequest).get();
 
     }
 
