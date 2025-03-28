@@ -11,3 +11,5 @@ curl -s -X DELETE http://localhost:9200/judgments
 
 echo "Creating judgments..."
 curl -s -X POST "http://localhost:9200/_plugins/search_relevance/judgments?click_model=coec&max_rank=50"
+
+curl -s "http://localhost:9200/srw_judgments/_search" | jq

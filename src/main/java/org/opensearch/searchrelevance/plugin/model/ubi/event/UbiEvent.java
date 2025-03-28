@@ -14,6 +14,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class UbiEvent {
 
+    @JsonProperty("timestamp")
+    private String timestamp;
+
     @JsonProperty("user_id")
     private String userId;
 
@@ -142,6 +145,22 @@ public class UbiEvent {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
     }
 
 }

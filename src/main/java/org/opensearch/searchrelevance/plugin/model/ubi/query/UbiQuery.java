@@ -20,6 +20,9 @@ public class UbiQuery {
     @JsonProperty("timestamp")
     private String timestamp;
 
+    @JsonProperty("application")
+    private String application;
+
     @JsonProperty("query_id")
     private String queryId;
 
@@ -158,6 +161,14 @@ public class UbiQuery {
 
     public void setQueryResponseHitIds(List<String> queryResponseHitIds) {
         this.queryResponseHitIds = queryResponseHitIds;
+    }
+
+    public String getApplication() {
+        return application;
+    }
+
+    public void setApplication(String application) {
+        this.application = application;
     }
 
 }

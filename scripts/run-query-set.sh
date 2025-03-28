@@ -6,8 +6,8 @@
 
 #!/bin/bash -e
 
-QUERY_SET_ID="09fc2a69-9bc0-49ea-9747-aefd66528858"
-JUDGMENTS_ID="cd7b72c9-21fa-4500-abf3-722438ab3ad4"
+QUERY_SET_ID="705cdaf2-2ac1-4e37-913b-7755b04c028e"
+JUDGMENTS_ID="6f888334-2bdb-4738-a464-d7d813c6a698"
 INDEX="ecommerce"
 ID_FIELD="asin"
 K="50"
@@ -16,7 +16,7 @@ THRESHOLD="1.0" # Default value
 curl -s -X DELETE "http://localhost:9200/srw_metrics"
 
 # Keyword search
-curl -s -X POST "http://localhost:9200/_plugins/search_relevance/experiment?id=${QUERY_SET_ID}&judgments_id=${JUDGMENTS_ID}&index=${INDEX}&id_field=${ID_FIELD}&k=${K}" \
+curl -s -X POST "http://localhost:9200/_plugins/search_relevance/experiments?id=${QUERY_SET_ID}&judgments_id=${JUDGMENTS_ID}&index=${INDEX}&id_field=${ID_FIELD}&k=${K}" \
    -H "Content-Type: application/json" \
     --data-binary '{
                       "multi_match": {
@@ -26,7 +26,7 @@ curl -s -X POST "http://localhost:9200/_plugins/search_relevance/experiment?id=$
                   }'
 
 ## Neural search
-#curl -s -X POST "http://localhost:9200/_plugins/search_relevance/experiment?id=${QUERY_SET_ID}&judgments_id=${JUDGMENTS_ID}&index=${INDEX}&id_field=${ID_FIELD}&k=${K}&search_pipeline=neural-search-pipeline" \
+#curl -s -X POST "http://localhost:9200/_plugins/search_relevance/experiments?id=${QUERY_SET_ID}&judgments_id=${JUDGMENTS_ID}&index=${INDEX}&id_field=${ID_FIELD}&k=${K}&search_pipeline=neural-search-pipeline" \
 #   -H "Content-Type: application/json" \
 #    --data-binary '{
 #                      "neural": {
@@ -38,7 +38,7 @@ curl -s -X POST "http://localhost:9200/_plugins/search_relevance/experiment?id=$
 #                  }'
 
 # Hybrid search
-#curl -s -X POST "http://localhost:9200/_plugins/search_relevance/experiment?id=${QUERY_SET_ID}&judgments_id=${JUDGMENTS_ID}&index=${INDEX}&id_field=${ID_FIELD}&k=${K}&search_pipeline=hybrid-search-pipeline" \
+#curl -s -X POST "http://localhost:9200/_plugins/search_relevance/experiments?id=${QUERY_SET_ID}&judgments_id=${JUDGMENTS_ID}&index=${INDEX}&id_field=${ID_FIELD}&k=${K}&search_pipeline=hybrid-search-pipeline" \
 #   -H "Content-Type: application/json" \
 #    --data-binary '{
 #                      "hybrid": {

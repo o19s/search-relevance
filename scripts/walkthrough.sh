@@ -12,7 +12,7 @@
 ./initialize-ubi-indexes.sh
 
 # Index the ESCI data.
-(cd ../data/esci/; ./index.sh)
+(cd ../data-esci/; ./index.sh)
 
 # Create judgments.
 curl -s -X POST "http://localhost:9200/_plugins/search_relevance/judgments?click_model=coec&max_rank=20"
