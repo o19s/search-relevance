@@ -12,7 +12,10 @@
 ./initialize-ubi-indexes.sh
 
 # Index the ESCI data.
-(cd ../data-esci/; ./index.sh)
+(cd ../data-esci/; ./index-ubi-queries-events.sh)
+
+# Index the ecommerce data. Make sure to set OPENSEARCH_CHORUS_HOME in the script.
+(cd ../data-esci/; ./index-ecommerce-products.sh)
 
 # Create judgments.
 curl -s -X POST "http://localhost:9200/_plugins/search_relevance/judgments?click_model=coec&max_rank=20"
