@@ -1,0 +1,27 @@
+---
+"Delete Judgment":
+
+  - do:
+      indices.create:
+        index: srw_judgments
+
+  - match: { acknowledged: true }
+  - match: { index: "srw_judgments"}
+
+  - do:
+      index:
+        index: srw_judgments
+        id: 1
+        body: { user_query: test }
+
+  - match: { result: created }
+
+  - do:
+      srw.delete_judgment:
+        id: 1
+
+  - do:
+      count:
+        index: srw_judgments
+
+  - match: { count: 0 }
