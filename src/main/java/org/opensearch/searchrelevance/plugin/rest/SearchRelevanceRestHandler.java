@@ -353,7 +353,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                             channel.sendResponse(
                                 new BytesRestResponse(
                                     RestStatus.INTERNAL_SERVER_ERROR,
-                                    "{\"error\": \"Failed to delete: " + e.getMessage() + "\"}"
+                                    "{\"error\": \"Failed to delete query set: " + e.getMessage() + "\"}"
                                 )
                             );
                         }
