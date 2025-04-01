@@ -12,7 +12,15 @@
       index:
         index: srw_judgments
         id: 1
-        body: { user_query: test }
+        body: { user_query: test1 }
+
+  - match: { result: created }
+
+  - do:
+      index:
+        index: srw_judgments
+        id: 2
+        body: { user_query: test2 }
 
   - match: { result: created }
 
@@ -21,7 +29,11 @@
         id: 1
 
   - do:
+     indices.refresh:
+         index: srw_judgments
+
+  - do:
       count:
         index: srw_judgments
 
-  - match: { count: 0 }
+  - match: { count: 1 }
