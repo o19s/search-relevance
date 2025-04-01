@@ -1,0 +1,23 @@
+{
+  "srw.delete_queryset": {
+    "stability": "stable",
+    "url": {
+      "paths": [
+        {
+          "path": "/_plugins/search_relevance/query_sets/{id}",
+          "parts": {
+            "id": {
+              "required": true,
+              "type": "string",
+              "description": "The query set ID"
+            }
+          },
+          "methods": [
+            "DELETE"
+          ]
+        }
+      ]
+    },
+    "body": null
+  }
+}

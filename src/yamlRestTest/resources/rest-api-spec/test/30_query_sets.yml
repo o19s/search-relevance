@@ -1,0 +1,27 @@
+---
+"Delete Query Set":
+
+  - do:
+      indices.create:
+        index: srw_query_sets
+
+  - match: { acknowledged: true }
+  - match: { index: "srw_query_sets"}
+
+  - do:
+      index:
+        index: srw_query_sets
+        id: 1
+        body: { user_query: test }
+
+  - match: { result: created }
+
+  - do:
+      srw.delete_queryset:
+        id: 1
+
+  - do:
+      count:
+        index: srw_query_sets
+
+  - match: { count: 0 }

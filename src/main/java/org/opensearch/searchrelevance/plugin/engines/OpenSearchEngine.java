@@ -432,6 +432,16 @@ public class OpenSearchEngine implements SearchEngine {
     }
 
     @Override
+    public void deleteQuerySet(final String querySetId, final ActionListener<DeleteResponse> listener) {
+
+        LOGGER.info("Deleting query set with ID: {}", querySetId);
+
+        final DeleteRequest deleteRequest = new DeleteRequest(Constants.QUERY_SETS_INDEX_NAME).id(querySetId);
+        client.delete(deleteRequest, listener);
+
+    }
+
+    @Override
     public void indexSearchConfiguration(
         final String searchConfigurationId,
         final SearchConfiguration searchConfiguration,

@@ -69,6 +69,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
         return List.of(
             new Route(RestRequest.Method.POST, JUDGMENTS_URL),
             new Route(RestRequest.Method.POST, QUERYSETS_URL),
+            new Route(RestRequest.Method.DELETE, QUERYSETS_URL + "/{id}"),
             new Route(RestRequest.Method.POST, EXPERIMENTS_URL),
             new Route(RestRequest.Method.POST, SEARCH_CONFIGURATIONS_URL),
             new Route(RestRequest.Method.GET, SEARCH_CONFIGURATIONS_URL),
@@ -233,7 +234,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                 );
             }
 
-        } else if (QUERYSETS_URL.equalsIgnoreCase(request.path())) {
+        } else if (rawPath.startsWith(QUERYSETS_URL)) {
 
             // Creating a new query set by sampling the UBI queries.
             if (request.method().equals(RestRequest.Method.POST)) {
@@ -329,6 +330,37 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                         new BytesRestResponse(RestStatus.BAD_REQUEST, "{\"error\": \"Invalid sampling method: " + sampling + "\"}")
                     );
                 }
+
+            } else if (request.method().equals(RestRequest.Method.DELETE)) {
+
+                final String querySetId = request.param("id");
+
+                return (channel) -> {
+
+                    openSearchEngine.deleteQuerySet(querySetId, new ActionListener<>() {
+
+                        @Override
+                        public void onResponse(DeleteResponse deleteResponse) {
+                            if (deleteResponse.getResult() == org.opensearch.action.DocWriteResponse.Result.NOT_FOUND) {
+                                channel.sendResponse(new BytesRestResponse(RestStatus.NOT_FOUND, "{\"acknowledged\": \"false\"}"));
+                            } else {
+                                channel.sendResponse(new BytesRestResponse(RestStatus.OK, "{\"acknowledged\": \"true\"}"));
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            channel.sendResponse(
+                                new BytesRestResponse(
+                                    RestStatus.INTERNAL_SERVER_ERROR,
+                                    "{\"error\": \"Failed to delete: " + e.getMessage() + "\"}"
+                                )
+                            );
+                        }
+
+                    });
+
+                };
 
             } else {
                 // Invalid HTTP method for this endpoint.
