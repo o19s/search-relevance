@@ -500,7 +500,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                         @Override
                         public void onResponse(DeleteResponse deleteResponse) {
                             if (deleteResponse.getResult() == org.opensearch.action.DocWriteResponse.Result.NOT_FOUND) {
-                                channel.sendResponse(new BytesRestResponse(RestStatus.NO_CONTENT, "{\"acknowledged\": \"false\"}"));
+                                channel.sendResponse(new BytesRestResponse(RestStatus.NOT_FOUND, "{\"acknowledged\": \"false\"}"));
                             } else {
                                 channel.sendResponse(new BytesRestResponse(RestStatus.OK, "{\"acknowledged\": \"true\"}"));
                             }
