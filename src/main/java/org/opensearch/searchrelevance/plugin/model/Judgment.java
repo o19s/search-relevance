@@ -10,46 +10,45 @@ package org.opensearch.searchrelevance.plugin.model;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.opensearch.searchrelevance.plugin.utils.MathUtils;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * A judgment of a search result's quality for a given query.
  */
 public class Judgment {
 
-    private static final Logger LOGGER = LogManager.getLogger(Judgment.class.getName());
-
     private final String queryId;
-    private final String query;
-    private final String document;
+    private final String userQuery;
+    private final String documentId;
     private final double judgment;
 
     /**
      * Creates a new judgment.
      * @param queryId The query ID for the judgment.
-     * @param query The query for the judgment.
-     * @param document The document in the jdugment.
+     * @param userQuery The user query for the judgment.
+     * @param documentId The document in the jdugment.
      * @param judgment The judgment value.
      */
-    public Judgment(final String queryId, final String query, final String document, final double judgment) {
+    public Judgment(final String queryId, final String userQuery, final String documentId, final double judgment) {
         this.queryId = queryId;
-        this.query = query;
-        this.document = document;
+        this.userQuery = userQuery;
+        this.documentId = documentId;
         this.judgment = judgment;
     }
 
     public String toJudgmentString() {
-        return queryId + ", " + query + ", " + document + ", " + MathUtils.round(judgment);
+        return queryId + ", " + userQuery + ", " + documentId + ", " + MathUtils.round(judgment);
     }
 
+    @JsonIgnore
     public Map<String, Object> getJudgmentAsMap() {
 
         final Map<String, Object> judgmentMap = new HashMap<>();
         judgmentMap.put("query_id", queryId);
-        judgmentMap.put("query", query);
-        judgmentMap.put("document_id", document);
+        judgmentMap.put("user_query", userQuery);
+        judgmentMap.put("document_id", documentId);
         judgmentMap.put("judgment", judgment);
 
         return judgmentMap;
@@ -58,7 +57,7 @@ public class Judgment {
 
     @Override
     public String toString() {
-        return "query_id: " + queryId + ", query: " + query + ", document: " + document + ", judgment: " + MathUtils.round(judgment);
+        return "query_id: " + queryId + ", query: " + userQuery + ", document: " + documentId + ", judgment: " + MathUtils.round(judgment);
     }
 
     /**
@@ -73,16 +72,16 @@ public class Judgment {
      * Gets the judgment's query.
      * @return The judgment's query.
      */
-    public String getQuery() {
-        return query;
+    public String getUserQuery() {
+        return userQuery;
     }
 
     /**
      * Gets the judgment's document.
      * @return The judgment's document.
      */
-    public String getDocument() {
-        return document;
+    public String getDocumentId() {
+        return documentId;
     }
 
     /**

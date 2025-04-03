@@ -40,6 +40,7 @@ import org.opensearch.search.sort.FieldSortBuilder;
 import org.opensearch.search.sort.SortOrder;
 import org.opensearch.searchrelevance.plugin.Constants;
 import org.opensearch.searchrelevance.plugin.model.ClickthroughRate;
+import org.opensearch.searchrelevance.plugin.model.GetJudgmentsRequest;
 import org.opensearch.searchrelevance.plugin.model.GetQuerySetsRequest;
 import org.opensearch.searchrelevance.plugin.model.GetSearchConfigurationsRequest;
 import org.opensearch.searchrelevance.plugin.model.Judgment;
@@ -444,6 +445,24 @@ public class OpenSearchEngine implements SearchEngine {
         );
 
         final SearchRequest searchRequest = new SearchRequest(Constants.QUERY_SETS_INDEX_NAME);
+        searchRequest.source(searchSourceBuilder);
+
+        client.search(searchRequest, listener);
+
+    }
+
+    @Override
+    public void getJudgments(final GetJudgmentsRequest getJudgmentsRequest, final ActionListener<SearchResponse> listener) {
+
+        final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+        searchSourceBuilder.size(getJudgmentsRequest.getSize());
+
+        searchSourceBuilder.sort(
+            new FieldSortBuilder("timestamp").order(SortOrder.fromString(getJudgmentsRequest.getSort().getTimestamp().getOrder()))
+        );
+
+        final SearchRequest searchRequest = new SearchRequest(Constants.JUDGMENTS_INDEX_NAME);
         searchRequest.source(searchSourceBuilder);
 
         client.search(searchRequest, listener);
