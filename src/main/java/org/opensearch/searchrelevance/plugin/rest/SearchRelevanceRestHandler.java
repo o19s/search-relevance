@@ -302,7 +302,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                             channel.sendResponse(
                                 new BytesRestResponse(
                                     RestStatus.INTERNAL_SERVER_ERROR,
-                                    "{\"error\": \"Unable to get search configurations: " + ex.getMessage() + "\"}"
+                                    "{\"error\": \"Unable to get query sets: " + ex.getMessage() + "\"}"
                                 )
                             );
                         }
