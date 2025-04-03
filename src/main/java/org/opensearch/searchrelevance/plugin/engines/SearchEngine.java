@@ -52,6 +52,13 @@ public interface SearchEngine {
     void indexClickthroughRates(final Map<String, Set<ClickthroughRate>> clickthroughRates) throws Exception;
 
     /**
+     * Deletes a query set.
+     * @param querySetId The id of the query set to delete.
+     * @param listener The listener to call when the deletion is complete.
+     */
+    void deleteQuerySet(final String querySetId, final ActionListener<DeleteResponse> listener);
+
+    /**
      * Index the judgments.
      * @param judgments A collection of {@link Judgment judgments}.
      * @throws IOException Thrown when there is a problem accessing OpenSearch.
