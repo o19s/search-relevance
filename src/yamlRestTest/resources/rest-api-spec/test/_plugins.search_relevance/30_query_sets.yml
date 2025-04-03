@@ -1,4 +1,48 @@
 ---
+"Get Query Sets":
+
+  - do:
+      indices.create:
+        index: srw_query_sets
+        body:
+          mappings:
+            properties:
+              timestamp:
+                type: date
+              description:
+                type: text
+              name:
+                type: keyword
+              sampling:
+                type: keyword
+              query_set_queries:
+                type: object
+
+  - match: { acknowledged: true }
+  - match: { index: "srw_query_sets"}
+
+  - do:
+      index:
+        index: srw_query_sets
+        id: 1
+        body: { description: a test query set, name: test_query_set }
+
+  - match: { result: created }
+
+  - do:
+      index:
+        index: srw_query_sets
+        id: 2
+        body: { description: a second test query set, name: test_query_set_2 }
+
+  - match: { result: created }
+
+  - do:
+      srw.get_querysets:
+        body:
+
+
+---
 "Delete Query Set":
 
   - do:

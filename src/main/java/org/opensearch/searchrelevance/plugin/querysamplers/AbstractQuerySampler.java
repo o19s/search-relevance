@@ -74,6 +74,7 @@ public abstract class AbstractQuerySampler {
         }
 
         final Map<String, Object> querySet = new HashMap<>();
+        querySet.put("id", querySetId);
         querySet.put("name", name);
         querySet.put("description", description);
         querySet.put("sampling", sampling);
