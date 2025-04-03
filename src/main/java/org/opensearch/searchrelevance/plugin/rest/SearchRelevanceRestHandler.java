@@ -67,6 +67,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
     @Override
     public List<Route> routes() {
         return List.of(
+            new Route(RestRequest.Method.DELETE, JUDGMENTS_URL + "/{id}"),
             new Route(RestRequest.Method.POST, JUDGMENTS_URL),
             new Route(RestRequest.Method.POST, QUERYSETS_URL),
             new Route(RestRequest.Method.DELETE, QUERYSETS_URL + "/{id}"),
@@ -441,8 +442,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                 new BytesRestResponse(RestStatus.OK, "{\"message\": \"Run initiated for query set " + querySetId + "\"}")
             );
 
-            // Handle the on-demand creation of implicit judgments.
-        } else if (JUDGMENTS_URL.equalsIgnoreCase(request.path())) {
+        } else if (rawPath.startsWith(JUDGMENTS_URL)) {
 
             if (request.method().equals(RestRequest.Method.POST)) {
 
@@ -520,6 +520,37 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                         new BytesRestResponse(RestStatus.BAD_REQUEST, "{\"error\": \"Invalid click model.\"}")
                     );
                 }
+
+            } else if (request.method().equals(RestRequest.Method.DELETE)) {
+
+                final String judgmentId = request.param("id");
+
+                return (channel) -> {
+
+                    openSearchEngine.deleteJudgment(judgmentId, new ActionListener<>() {
+
+                        @Override
+                        public void onResponse(DeleteResponse deleteResponse) {
+                            if (deleteResponse.getResult() == org.opensearch.action.DocWriteResponse.Result.NOT_FOUND) {
+                                channel.sendResponse(new BytesRestResponse(RestStatus.NOT_FOUND, "{\"acknowledged\": \"false\"}"));
+                            } else {
+                                channel.sendResponse(new BytesRestResponse(RestStatus.OK, "{\"acknowledged\": \"true\"}"));
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            channel.sendResponse(
+                                new BytesRestResponse(
+                                    RestStatus.INTERNAL_SERVER_ERROR,
+                                    "{\"error\": \"Failed to delete judgment: " + e.getMessage() + "\"}"
+                                )
+                            );
+                        }
+
+                    });
+
+                };
 
             } else {
                 return restChannel -> restChannel.sendResponse(

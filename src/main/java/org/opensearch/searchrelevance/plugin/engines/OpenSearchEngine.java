@@ -432,6 +432,16 @@ public class OpenSearchEngine implements SearchEngine {
     }
 
     @Override
+    public void deleteJudgment(final String judgmentId, final ActionListener<DeleteResponse> listener) {
+
+        LOGGER.info("Deleting judgment with ID: {}", judgmentId);
+
+        final DeleteRequest deleteRequest = new DeleteRequest(Constants.JUDGMENTS_INDEX_NAME).id(judgmentId);
+        client.delete(deleteRequest, listener);
+
+    }
+
+    @Override
     public void deleteQuerySet(final String querySetId, final ActionListener<DeleteResponse> listener) {
 
         LOGGER.info("Deleting query set with ID: {}", querySetId);

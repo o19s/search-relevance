@@ -66,6 +66,13 @@ public interface SearchEngine {
      */
     String indexJudgments(final Collection<Judgment> judgments) throws Exception;
 
+    /**
+     * Delete a judgment list.
+     * @param judgmentId The ID of the judgment list to delete.
+     * @param listener The listener to call when the deletion is complete.
+     */
+    void deleteJudgment(final String judgmentId, final ActionListener<DeleteResponse> listener);
+
     void createIndexIfNotExists(final String indexName, final String indexMapping);
 
     long getUserQueryCount(final String userQuery);
