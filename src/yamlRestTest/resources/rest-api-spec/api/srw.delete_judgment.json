@@ -1,0 +1,23 @@
+{
+  "srw.delete_judgment": {
+    "stability": "stable",
+    "url": {
+      "paths": [
+        {
+          "path": "/_plugins/search_relevance/judgments/{id}",
+          "parts": {
+            "id": {
+              "required": true,
+              "type": "string",
+              "description": "The judgments ID"
+            }
+          },
+          "methods": [
+            "DELETE"
+          ]
+        }
+      ]
+    },
+    "body": null
+  }
+}
