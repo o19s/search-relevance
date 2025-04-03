@@ -13,7 +13,6 @@ import java.nio.charset.Charset;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -266,27 +265,28 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
                         @Override
                         public void onResponse(SearchResponse searchResponse) {
 
-                            final List<QuerySet> searchConfigurations = new ArrayList<>();
+                            final List<QuerySet> querySets = new ArrayList<>();
 
                             final ObjectMapper objectMapper = new ObjectMapper();
 
                             for (final SearchHit hit : searchResponse.getHits().getHits()) {
                                 final Map<String, Object> source = hit.getSourceAsMap();
-                                searchConfigurations.add(
+
+                                querySets.add(
                                     new QuerySet(
                                         source.get("id").toString(),
                                         source.get("timestamp").toString(),
                                         source.get("description").toString(),
                                         source.get("name").toString(),
                                         source.get("sampling").toString(),
-                                        (Collection<String>) source.get("querySetQueries")
+                                        (List<Map<String, Integer>>) source.get("query_set_queries")
                                     )
                                 );
                             }
 
                             final String jsonResponse = AccessController.doPrivileged((PrivilegedAction<String>) () -> {
                                 try {
-                                    return objectMapper.writeValueAsString(searchConfigurations);
+                                    return objectMapper.writeValueAsString(querySets);
                                 } catch (JsonProcessingException e) {
                                     throw new RuntimeException(e);
                                 }

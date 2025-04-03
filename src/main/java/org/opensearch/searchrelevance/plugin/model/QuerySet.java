@@ -7,7 +7,8 @@
  */
 package org.opensearch.searchrelevance.plugin.model;
 
-import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class QuerySet {
 
@@ -16,7 +17,7 @@ public class QuerySet {
     private String description;
     private String name;
     private String sampling;
-    private Collection<String> querySetQueries;
+    private List<Map<String, Integer>> querySetQueries;
 
     public QuerySet(
         final String id,
@@ -24,7 +25,7 @@ public class QuerySet {
         final String description,
         final String name,
         final String sampling,
-        final Collection<String> querySetQueries
+        final List<Map<String, Integer>> querySetQueries
     ) {
         this.id = id;
         this.timestamp = timestamp;
@@ -78,11 +79,11 @@ public class QuerySet {
         this.sampling = sampling;
     }
 
-    public Collection<String> getQuerySetQueries() {
+    public List<Map<String, Integer>> getQuerySetQueries() {
         return querySetQueries;
     }
 
-    public void setQuerySetQueries(Collection<String> querySetQueries) {
+    public void setQuerySetQueries(List<Map<String, Integer>> querySetQueries) {
         this.querySetQueries = querySetQueries;
     }
 
