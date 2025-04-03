@@ -41,6 +41,7 @@
       srw.get_querysets:
         body:
 
+  # TODO: Match the returned queries against the ones that were indexed.
 
 ---
 "Delete Query Set":
