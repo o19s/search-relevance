@@ -74,10 +74,11 @@ public abstract class AbstractQuerySampler {
         }
 
         final Map<String, Object> querySet = new HashMap<>();
+        querySet.put("id", querySetId);
         querySet.put("name", name);
         querySet.put("description", description);
         querySet.put("sampling", sampling);
-        querySet.put("queries", querySetQueries);
+        querySet.put("query_set_queries", querySetQueries);
         querySet.put("timestamp", TimeUtils.getTimestamp());
 
         openSearchEngine.createIndexIfNotExists(Constants.QUERY_SETS_INDEX_NAME, Constants.QUERY_SETS_INDEX_MAPPING);

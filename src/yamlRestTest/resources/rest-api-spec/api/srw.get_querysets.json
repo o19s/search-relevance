@@ -1,0 +1,16 @@
+{
+  "srw.get_querysets": {
+    "stability": "stable",
+    "url": {
+      "paths": [
+        {
+          "path": "/_plugins/search_relevance/query_sets",
+          "methods": [
+            "GET"
+          ]
+        }
+      ]
+    },
+    "body": null
+  }
+}
