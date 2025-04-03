@@ -13,6 +13,7 @@ import java.nio.charset.Charset;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -33,7 +34,9 @@ import org.opensearch.searchrelevance.plugin.Constants;
 import org.opensearch.searchrelevance.plugin.engines.OpenSearchEngine;
 import org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClickModel;
 import org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClickModelParameters;
+import org.opensearch.searchrelevance.plugin.model.GetQuerySetsRequest;
 import org.opensearch.searchrelevance.plugin.model.GetSearchConfigurationsRequest;
+import org.opensearch.searchrelevance.plugin.model.QuerySet;
 import org.opensearch.searchrelevance.plugin.model.SearchConfiguration;
 import org.opensearch.searchrelevance.plugin.querysamplers.ProbabilityProportionalToSizeQuerySampler;
 import org.opensearch.searchrelevance.plugin.querysamplers.ProbabilityProportionalToSizeQuerySamplerParameters;
@@ -68,6 +71,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
     public List<Route> routes() {
         return List.of(
             new Route(RestRequest.Method.POST, JUDGMENTS_URL),
+            new Route(RestRequest.Method.GET, QUERYSETS_URL),
             new Route(RestRequest.Method.POST, QUERYSETS_URL),
             new Route(RestRequest.Method.DELETE, QUERYSETS_URL + "/{id}"),
             new Route(RestRequest.Method.POST, EXPERIMENTS_URL),
@@ -236,8 +240,75 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
 
         } else if (rawPath.startsWith(QUERYSETS_URL)) {
 
-            // Creating a new query set by sampling the UBI queries.
-            if (request.method().equals(RestRequest.Method.POST)) {
+            if (request.method().equals(RestRequest.Method.GET)) {
+
+                // Get the query sets.
+                final String requestBody = request.content().utf8ToString();
+
+                final GetQuerySetsRequest getQuerySetsRequest;
+                if (!requestBody.isEmpty()) {
+                    getQuerySetsRequest = AccessController.doPrivileged((PrivilegedAction<GetQuerySetsRequest>) () -> {
+                        try {
+                            return objectMapper.readValue(requestBody, GetQuerySetsRequest.class);
+                        } catch (JsonProcessingException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                } else {
+                    // None provided so use defaults.
+                    getQuerySetsRequest = new GetQuerySetsRequest();
+                }
+
+                return (channel) -> {
+                    openSearchEngine.getQuerySets(getQuerySetsRequest, new ActionListener<>() {
+
+                        @Override
+                        public void onResponse(SearchResponse searchResponse) {
+
+                            final List<QuerySet> searchConfigurations = new ArrayList<>();
+
+                            final ObjectMapper objectMapper = new ObjectMapper();
+
+                            for (final SearchHit hit : searchResponse.getHits().getHits()) {
+                                final Map<String, Object> source = hit.getSourceAsMap();
+                                searchConfigurations.add(
+                                    new QuerySet(
+                                        source.get("id").toString(),
+                                        source.get("timestamp").toString(),
+                                        source.get("description").toString(),
+                                        source.get("name").toString(),
+                                        source.get("sampling").toString(),
+                                        (Collection<String>) source.get("querySetQueries")
+                                    )
+                                );
+                            }
+
+                            final String jsonResponse = AccessController.doPrivileged((PrivilegedAction<String>) () -> {
+                                try {
+                                    return objectMapper.writeValueAsString(searchConfigurations);
+                                } catch (JsonProcessingException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            });
+
+                            channel.sendResponse(new BytesRestResponse(RestStatus.OK, jsonResponse));
+
+                        }
+
+                        @Override
+                        public void onFailure(Exception ex) {
+                            LOGGER.error("Error:", ex);
+                            channel.sendResponse(
+                                new BytesRestResponse(
+                                    RestStatus.INTERNAL_SERVER_ERROR,
+                                    "{\"error\": \"Unable to get search configurations: " + ex.getMessage() + "\"}"
+                                )
+                            );
+                        }
+                    });
+                };
+
+            } else if (request.method().equals(RestRequest.Method.POST)) {
 
                 // TODO: Perhaps these parameters are better passed in the body instead of as query params.
                 final String name = request.param("name");

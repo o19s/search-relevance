@@ -17,6 +17,7 @@ import org.opensearch.action.index.IndexResponse;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.searchrelevance.plugin.model.ClickthroughRate;
+import org.opensearch.searchrelevance.plugin.model.GetQuerySetsRequest;
 import org.opensearch.searchrelevance.plugin.model.GetSearchConfigurationsRequest;
 import org.opensearch.searchrelevance.plugin.model.Judgment;
 import org.opensearch.searchrelevance.plugin.model.SearchConfiguration;
@@ -50,6 +51,8 @@ public interface SearchEngine {
      * @throws IOException Thrown when there is a problem accessing OpenSearch.
      */
     void indexClickthroughRates(final Map<String, Set<ClickthroughRate>> clickthroughRates) throws Exception;
+
+    void getQuerySets(final GetQuerySetsRequest getQuerySetsRequest, final ActionListener<SearchResponse> listener);
 
     /**
      * Deletes a query set.
