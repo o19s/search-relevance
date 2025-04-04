@@ -1,4 +1,43 @@
 ---
+"Get Judgments":
+
+  - do:
+      indices.create:
+        index: srw_judgments
+        body:
+          mappings:
+            properties:
+              timestamp:
+                type: date
+              user_query:
+                type: keyword
+
+  - match: { acknowledged: true }
+  - match: { index: "srw_judgments"}
+
+  - do:
+      index:
+        index: srw_judgments
+        id: 1
+        body: { user_query: computer }
+
+  - match: { result: created }
+
+  - do:
+      index:
+        index: srw_judgments
+        id: 2
+        body: { user_query: laptop }
+
+  - match: { result: created }
+
+  - do:
+      srw.get_judgments:
+        body:
+
+  # TODO: Match the returned queries against the ones that were indexed.
+
+---
 "Delete Judgment":
 
   - do:

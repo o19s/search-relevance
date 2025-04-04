@@ -1,0 +1,16 @@
+{
+  "srw.get_judgments": {
+    "stability": "stable",
+    "url": {
+      "paths": [
+        {
+          "path": "/_plugins/search_relevance/judgments",
+          "methods": [
+            "GET"
+          ]
+        }
+      ]
+    },
+    "body": null
+  }
+}

@@ -33,8 +33,10 @@ import org.opensearch.searchrelevance.plugin.Constants;
 import org.opensearch.searchrelevance.plugin.engines.OpenSearchEngine;
 import org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClickModel;
 import org.opensearch.searchrelevance.plugin.judgments.clickmodel.coec.CoecClickModelParameters;
+import org.opensearch.searchrelevance.plugin.model.GetJudgmentsRequest;
 import org.opensearch.searchrelevance.plugin.model.GetQuerySetsRequest;
 import org.opensearch.searchrelevance.plugin.model.GetSearchConfigurationsRequest;
+import org.opensearch.searchrelevance.plugin.model.Judgment;
 import org.opensearch.searchrelevance.plugin.model.QuerySet;
 import org.opensearch.searchrelevance.plugin.model.SearchConfiguration;
 import org.opensearch.searchrelevance.plugin.querysamplers.ProbabilityProportionalToSizeQuerySampler;
@@ -71,6 +73,7 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
         return List.of(
             new Route(RestRequest.Method.DELETE, JUDGMENTS_URL + "/{id}"),
             new Route(RestRequest.Method.POST, JUDGMENTS_URL),
+            new Route(RestRequest.Method.GET, JUDGMENTS_URL),
             new Route(RestRequest.Method.GET, QUERYSETS_URL),
             new Route(RestRequest.Method.POST, QUERYSETS_URL),
             new Route(RestRequest.Method.DELETE, QUERYSETS_URL + "/{id}"),
@@ -515,7 +518,74 @@ public class SearchRelevanceRestHandler extends BaseRestHandler {
 
         } else if (rawPath.startsWith(JUDGMENTS_URL)) {
 
-            if (request.method().equals(RestRequest.Method.POST)) {
+            if (request.method().equals(RestRequest.Method.GET)) {
+
+                // Get the query sets.
+                final String requestBody = request.content().utf8ToString();
+
+                final GetJudgmentsRequest getJudgmentsRequest;
+                if (!requestBody.isEmpty()) {
+                    getJudgmentsRequest = AccessController.doPrivileged((PrivilegedAction<GetJudgmentsRequest>) () -> {
+                        try {
+                            return objectMapper.readValue(requestBody, GetJudgmentsRequest.class);
+                        } catch (JsonProcessingException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                } else {
+                    // None provided so use defaults.
+                    getJudgmentsRequest = new GetJudgmentsRequest();
+                }
+
+                return (channel) -> {
+                    openSearchEngine.getJudgments(getJudgmentsRequest, new ActionListener<>() {
+
+                        @Override
+                        public void onResponse(SearchResponse searchResponse) {
+
+                            final List<Judgment> judgments = new ArrayList<>();
+
+                            final ObjectMapper objectMapper = new ObjectMapper();
+
+                            for (final SearchHit hit : searchResponse.getHits().getHits()) {
+                                final Map<String, Object> source = hit.getSourceAsMap();
+
+                                judgments.add(
+                                    new Judgment(
+                                        source.get("query_id").toString(),
+                                        source.get("user_query").toString(),
+                                        source.get("document_id").toString(),
+                                        (double) source.get("judgment")
+                                    )
+                                );
+                            }
+
+                            final String jsonResponse = AccessController.doPrivileged((PrivilegedAction<String>) () -> {
+                                try {
+                                    return objectMapper.writeValueAsString(judgments);
+                                } catch (JsonProcessingException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            });
+
+                            channel.sendResponse(new BytesRestResponse(RestStatus.OK, jsonResponse));
+
+                        }
+
+                        @Override
+                        public void onFailure(Exception ex) {
+                            LOGGER.error("Error:", ex);
+                            channel.sendResponse(
+                                new BytesRestResponse(
+                                    RestStatus.INTERNAL_SERVER_ERROR,
+                                    "{\"error\": \"Unable to get judgments: " + ex.getMessage() + "\"}"
+                                )
+                            );
+                        }
+                    });
+                };
+
+            } else if (request.method().equals(RestRequest.Method.POST)) {
 
                 // final long startTime = System.currentTimeMillis();
                 final String clickModel = request.param("click_model", "coec");
