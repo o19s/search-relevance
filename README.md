@@ -29,13 +29,13 @@ Then to make judgments:
 
 ```
 cd scripts
-./create-coec-judgments.sh 
+./create-coec-judgments.sh
 ```
 
 Then a query set  still under scripts):
 
 ```
-./create-query-set-using-random-sampling.sh 
+./create-query-set-using-random-sampling.sh
 ```
 
 To see the judgments
