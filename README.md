@@ -20,7 +20,7 @@ After the container is running:
 Then index the ESCI data:
 
 ```
-cd data-esci
+cd data/esci
 ./index-ubi-queries-events.sh
 ./index-ecommerce-products.sh
 ```
