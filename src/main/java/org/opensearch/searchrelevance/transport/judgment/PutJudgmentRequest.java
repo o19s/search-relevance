@@ -5,41 +5,45 @@
  * this file be licensed under the Apache-2.0 license or a
  * compatible open source license.
  */
-package org.opensearch.searchrelevance.transport;
+package org.opensearch.searchrelevance.transport.judgment;
 
 import java.io.IOException;
 
 import org.opensearch.action.ActionRequest;
 import org.opensearch.action.ActionRequestValidationException;
+import org.opensearch.common.Nullable;
 import org.opensearch.core.common.io.stream.StreamInput;
 import org.opensearch.core.common.io.stream.StreamOutput;
 
-import reactor.util.annotation.Nullable;
+public class PutJudgmentRequest extends ActionRequest {
+    private String name;
+    private String description;
 
-/**
- * Transport Request to create a queryset.
- */
-public class QuerySetRequest extends ActionRequest {
-    private String querySetId;
-
-    public QuerySetRequest(@Nullable String querySetId) {
-        this.querySetId = querySetId;
+    public PutJudgmentRequest(String name, String description) {
+        this.name = name;
+        this.description = description;
     }
 
-    public QuerySetRequest(StreamInput in) throws IOException {
+    public PutJudgmentRequest(StreamInput in) throws IOException {
         super(in);
-        this.querySetId = in.readOptionalString();
-    }
-
-    @Nullable
-    public String getQuerySetId() {
-        return this.querySetId;
+        this.name = in.readString();
+        this.description = in.readString();
     }
 
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         super.writeTo(out);
-        out.writeOptionalString(querySetId);
+        out.writeString(name);
+        out.writeString(description);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    @Nullable
+    public String getDescription() {
+        return description;
     }
 
     @Override

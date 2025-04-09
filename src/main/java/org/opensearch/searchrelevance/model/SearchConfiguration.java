@@ -1,0 +1,65 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The OpenSearch Contributors require contributions made to
+ * this file be licensed under the Apache-2.0 license or a
+ * compatible open source license.
+ */
+package org.opensearch.searchrelevance.model;
+
+import java.io.IOException;
+
+import org.opensearch.core.xcontent.ToXContentObject;
+import org.opensearch.core.xcontent.XContentBuilder;
+
+/**
+ * SearchConfiguration is a system index object that represents all search related params.
+ */
+public class SearchConfiguration implements ToXContentObject {
+    public static final String NAME = "name";
+    public static final String TIME_STAMP = "timestamp";
+    public static final String QUERY_BODY = "queryBody";
+    public static final String SEARCH_PIPELINE = "searchPipeline";
+
+    /**
+     * Identifier of the system index
+     */
+    private final String name;
+    private final String timestamp;
+    private final String queryBody;
+    private final String searchPipeline;
+
+    public SearchConfiguration(String name, String timestamp, String queryBody, String searchPipeline) {
+        this.name = name;
+        this.timestamp = timestamp;
+        this.queryBody = queryBody;
+        this.searchPipeline = searchPipeline;
+    }
+
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        XContentBuilder xContentBuilder = builder.startObject();
+        xContentBuilder.field(NAME, this.name.trim());
+        xContentBuilder.field(TIME_STAMP, this.timestamp.trim());
+        xContentBuilder.field(QUERY_BODY, this.queryBody.trim());
+        xContentBuilder.field(SEARCH_PIPELINE, this.searchPipeline == null ? "" : this.searchPipeline.trim());
+        return xContentBuilder.endObject();
+    }
+
+    public String name() {
+        return name;
+    }
+
+    public String timestamp() {
+        return timestamp;
+    }
+
+    public String queryBody() {
+        return queryBody;
+    }
+
+    public String searchPipeline() {
+        return searchPipeline;
+    }
+
+}
