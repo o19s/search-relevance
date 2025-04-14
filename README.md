@@ -6,6 +6,36 @@ This repository covers the backend part which is implemented as an OpenSearch pl
 
 ## Example Usage
 
+The following steps assume you have Chorus (OpenSearch edition) cloned and at least once exectued the quickstart.sh script. We are relying on the data used in that repository.
+If you already have Chorus you can skip the next steps until "Build and run OpenSearch with the plugin"
+
+Clone Chorus OpenSearch:
+
+```
+cd ..
+```
+```
+git clone https://github.com/o19s/chorus-opensearch-edition.git
+```
+
+Run the `quickstart.sh` script:
+```
+cd chorus-opensearch-edition
+```
+```
+./quickstart.sh
+```
+
+Stop Chorus and change into the plugin directory:
+```
+./quickstart.sh --stop
+```
+```
+cd ../search-relevance
+```
+
+Build and run OpenSearch with the plugin:
+
 ```
 ./gradlew build
 docker compose build && docker compose up
