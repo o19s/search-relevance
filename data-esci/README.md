@@ -1,5 +1,3 @@
-
-
 # ESCI Data in UBI Format
 
 This directory contains a small extract of ESCI data as well as query and event data in the UBI format. 
