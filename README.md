@@ -8,37 +8,51 @@ This repository covers the backend part which is implemented as an OpenSearch pl
 
 ```
 ./gradlew build
+```
+
+Either start OpenSearch backend with:
+
+```
 docker compose build && docker compose up
 ```
 
-After the container is running:
+or
 
 ```
-./scripts/initialize-ubi-indexes.sh
+./gradlew run
 ```
 
-Then index the ESCI data:
+After OpenSearch backend is running (`curl http://localhost:9200`), load the sample ecommerce data:
 
 ```
 cd data-esci
-./index-ubi-queries-events.sh
 ./index-ecommerce-products.sh
 ```
 
-Then to make judgments:
+Now load the sample UBI data.
 
 ```
-cd scripts
+cd ../scripts
+./initialize-ubi-indexes.sh
+cd ../data-esci
+./index-ubi-queries-events.sh
+```
+
+
+Then make implicit judgements using the sample UBI click data:
+
+```
+cd ../scripts
 ./create-coec-judgments.sh
 ```
 
-Then a query set  still under scripts):
+Now create a query set using random sampling:
 
 ```
 ./create-query-set-using-random-sampling.sh
 ```
 
-To see the judgments
+To see the judgments:
 
 ```
 ./get-judgments.sh
@@ -51,3 +65,16 @@ And to see the query sets:
 ```
 
 All of the scripts under `scripts/` can be used similarly.
+
+
+To start back over with a fresh setup do either:
+
+```
+docker compose down -v
+```
+
+or
+
+```
+./gradlew clean
+```
