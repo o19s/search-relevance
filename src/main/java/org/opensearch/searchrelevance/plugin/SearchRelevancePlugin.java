@@ -30,11 +30,10 @@ import org.opensearch.core.xcontent.NamedXContentRegistry;
 import org.opensearch.env.Environment;
 import org.opensearch.env.NodeEnvironment;
 import org.opensearch.indices.SystemIndexDescriptor;
+import org.opensearch.ml.client.MachineLearningNodeClient;
 import org.opensearch.plugins.ActionPlugin;
 import org.opensearch.plugins.ClusterPlugin;
-import org.opensearch.plugins.IngestPlugin;
 import org.opensearch.plugins.Plugin;
-import org.opensearch.plugins.SearchPlugin;
 import org.opensearch.plugins.SystemIndexPlugin;
 import org.opensearch.repositories.RepositoriesService;
 import org.opensearch.rest.RestController;
@@ -46,6 +45,7 @@ import org.opensearch.searchrelevance.dao.QuerySetDao;
 import org.opensearch.searchrelevance.dao.SearchConfigurationDao;
 import org.opensearch.searchrelevance.indices.SearchRelevanceIndicesManager;
 import org.opensearch.searchrelevance.metrics.MetricsHelper;
+import org.opensearch.searchrelevance.ml.MLAccessor;
 import org.opensearch.searchrelevance.rest.RestCreateQuerySetAction;
 import org.opensearch.searchrelevance.rest.RestDeleteExperimentAction;
 import org.opensearch.searchrelevance.rest.RestDeleteJudgmentAction;
@@ -89,7 +89,7 @@ import org.opensearch.threadpool.ThreadPool;
 import org.opensearch.transport.client.Client;
 import org.opensearch.watcher.ResourceWatcherService;
 
-public class SearchRelevancePlugin extends Plugin implements IngestPlugin, ActionPlugin, SystemIndexPlugin, SearchPlugin, ClusterPlugin {
+public class SearchRelevancePlugin extends Plugin implements ActionPlugin, SystemIndexPlugin, ClusterPlugin {
 
     private Client client;
     private ClusterService clusterService;
@@ -98,7 +98,6 @@ public class SearchRelevancePlugin extends Plugin implements IngestPlugin, Actio
     private SearchConfigurationDao searchConfigurationDao;
     private ExperimentDao experimentDao;
     private JudgmentDao judgmentDao;
-
     private MetricsHelper metricsHelper;
 
     @Override
@@ -132,7 +131,9 @@ public class SearchRelevancePlugin extends Plugin implements IngestPlugin, Actio
         this.querySetDao = new QuerySetDao(searchRelevanceIndicesManager);
         this.searchConfigurationDao = new SearchConfigurationDao(searchRelevanceIndicesManager);
         this.judgmentDao = new JudgmentDao(searchRelevanceIndicesManager);
-        this.metricsHelper = new MetricsHelper(clusterService, client);
+        MachineLearningNodeClient mlClient = new MachineLearningNodeClient(client);
+        MLAccessor mlAccessor = new MLAccessor(mlClient);
+        this.metricsHelper = new MetricsHelper(clusterService, client, mlAccessor);
         return List.of(searchRelevanceIndicesManager, querySetDao, searchConfigurationDao, experimentDao, judgmentDao, metricsHelper);
     }
 

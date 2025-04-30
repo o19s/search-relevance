@@ -35,4 +35,8 @@ public class Judgment implements ToXContentObject {
         return id;
     }
 
+    public String timestamp() {
+        return timestamp;
+    }
+
 }
