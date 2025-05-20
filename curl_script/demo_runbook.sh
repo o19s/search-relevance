@@ -5,10 +5,21 @@
 #  * Implement show a specific experiment
 #  * Switch to the field values used in the runbook, we are using those from the other shell scripts. In particular use ecommerce index and use the query bodies from the runbook
 
+echo Deleting UBI indexes
+(curl -s -X DELETE "http://localhost:9200/ubi_queries" > /dev/null) || true
+(curl -s -X DELETE "http://localhost:9200/ubi_events" > /dev/null) || true
+
+echo Creating UBI indexes
+curl -s -X POST http://localhost:9200/_plugins/ubi/initialize
+
 echo Deleting queryset, search config and experiment indexes
 (curl -s -X DELETE "http://localhost:9200/.plugins-search-relevance-search-config" > /dev/null) || true
 (curl -s -X DELETE "http://localhost:9200/.plugins-search-relevance-queryset" > /dev/null) || true
 (curl -s -X DELETE "http://localhost:9200/.plugins-search-relevance-experiment" > /dev/null) || true
+
+echo Loading sample UBI data
+# Make sure to create the UBI events and queries indexes first otherwise you will run into mapping errors later on.
+curl  -X POST 'http://localhost:9200/index-name/_bulk?pretty' --data-binary @../data-esci/ubi_queries_events.ndjson -H "Content-Type: application/x-ndjson"
 
 echo Create search configs
 
