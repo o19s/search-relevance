@@ -9,7 +9,7 @@
     - [Build](#build)
     - [Run OpenSearch search-relevance](#run-opensearch-search-relevance)
         - [Run Single-node Cluster Locally](#run-single-node-cluster-locally)
-        - [Run Multi-node Cluster Locally](#run-multi-node-cluster-locally)
+        - [Run SRW with User Behavior Insights](#run-srw-with-user-behavior-insights)
         - [Run remote cluster](#run-remote-clusters-with-search-relevance)
 
 # Developer Guide
@@ -117,9 +117,15 @@ curl localhost:9200
 }
 ```
 
+### Run SRW with User Behavior Insights
+1. run command `docker compose build` to create an image that has the UBI plugin installed.
+2. run command `docker compose up` to spin up the containers.
+3. To setup up the UBI indexes run `curl -s -X POST http://localhost:9200/_plugins/ubi/initialize`.
+4. See the script `src/test/demo.sh` to see the full process of creating new UBI indexes loaded with sample data.
+
 ### Run remote clusters with search-relevance
-1. update `docker-compse.yml` with your remote clusters
-2. run command `docker compse up` to spin up the containers
+1. update `docker-compose.yml` with your remote clusters
+2. run command `docker compose up` to spin up the containers
 3. run `docker ps` to make sure all containers are up
 ```
 // example
