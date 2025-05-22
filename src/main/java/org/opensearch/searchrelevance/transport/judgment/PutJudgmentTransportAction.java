@@ -68,9 +68,6 @@ public class PutJudgmentTransportAction extends HandledTransportAction<PutJudgme
         JudgmentType type = request.getType();
         Map<String, Object> metadata = buildMetadata(request);
 
-        // Step 1: create initial judgment with empty judgmentScores
-
-        // Step 2: create index
         StepListener<Void> createIndexStep = new StepListener<>();
         judgmentDao.createIndexIfAbsent(createIndexStep);
 
@@ -93,6 +90,8 @@ public class PutJudgmentTransportAction extends HandledTransportAction<PutJudgme
                 metadata.put("querySetId", llmRequest.getQuerySetId());
                 metadata.put("size", llmRequest.getSize());
                 metadata.put("searchConfigurationList", llmRequest.getSearchConfigurationList());
+                metadata.put("tokenLimit", llmRequest.getTokenLimit());
+                metadata.put("contextFields", llmRequest.getContextFields());
             }
             case UBI_JUDGMENT -> {
                 PutUbiJudgmentRequest ubiRequest = (PutUbiJudgmentRequest) request;
@@ -104,15 +103,17 @@ public class PutJudgmentTransportAction extends HandledTransportAction<PutJudgme
     }
 
     private void triggerAsyncProcessing(String judgmentId, PutJudgmentRequest request, Map<String, Object> metadata) {
+        LOGGER.info("Starting async processing for judgment: {}, type: {}, metadata: {}", judgmentId, request.getType(), metadata);
         BaseJudgmentsProcessor processor = judgmentsProcessorFactory.getProcessor(request.getType());
 
-        processor.generateJudgmentScore(
-            metadata,
-            ActionListener.wrap(
-                judgmentScores -> updateFinalJudgment(judgmentId, request, metadata, judgmentScores),
-                error -> handleAsyncFailure(judgmentId, request, "Failed to generate judgment scores", error)
-            )
-        );
+        processor.generateJudgmentScore(metadata, ActionListener.wrap(judgmentScores -> {
+            LOGGER.info(
+                "Generated judgment scores for {}, scores size: {}",
+                judgmentId,
+                judgmentScores != null ? judgmentScores.size() : 0
+            );
+            updateFinalJudgment(judgmentId, request, metadata, judgmentScores);
+        }, error -> handleAsyncFailure(judgmentId, request, "Failed to generate judgment scores", error)));
     }
 
     private void updateFinalJudgment(

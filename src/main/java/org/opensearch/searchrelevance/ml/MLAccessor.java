@@ -18,11 +18,17 @@ import static org.opensearch.searchrelevance.common.MLConstants.RESPONSE_MESSAGE
 import static org.opensearch.searchrelevance.common.MLConstants.escapeJson;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,6 +52,8 @@ public class MLAccessor {
     private MachineLearningNodeClient mlClient;
 
     private static final Logger LOGGER = LogManager.getLogger(MLAccessor.class);
+    private static final int MAX_RETRY_NUMBER = 3;
+    private static final long RETRY_DELAY_MS = 1000;
 
     public MLAccessor(MachineLearningNodeClient mlClient) {
         this.mlClient = mlClient;
@@ -53,12 +61,79 @@ public class MLAccessor {
 
     public void predict(
         String modelId,
+        int tokenLimit,
         String searchText,
         String reference,
-        List<Map<String, String>> hits,
-        ActionListener<String> listener
+        Map<String, String> hits,
+        ActionListener<ChunkResult> progressListener  // For individual chunk
     ) {
-        MLInput mlInput = getMLInput(searchText, reference, hits);
+        List<MLInput> mlInputs = getMLInputs(tokenLimit, searchText, reference, hits);
+
+        LOGGER.info("Number of chunks: {}", mlInputs.size());
+        AtomicInteger completedChunks = new AtomicInteger(0);
+        ConcurrentMap<Integer, String> responses = new ConcurrentHashMap<>();
+
+        for (int i = 0; i < mlInputs.size(); i++) {
+            final int chunkIndex = i;
+            predictSingleChunkWithRetry(modelId, mlInputs.get(chunkIndex), chunkIndex, 0, new ActionListener<String>() {
+                @Override
+                public void onResponse(String response) {
+                    LOGGER.info("Chunk {} processed successfully", chunkIndex);
+                    String processedResponse = response.substring(1, response.length() - 1); // remove brackets
+                    responses.put(chunkIndex, processedResponse);
+
+                    // Notify about individual chunk completion
+                    progressListener.onResponse(
+                        new ChunkResult(
+                            chunkIndex,
+                            processedResponse,
+                            mlInputs.size(),
+                            completedChunks.incrementAndGet() == mlInputs.size()
+                        )
+                    );
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    LOGGER.error("Chunk {} failed after all retries", chunkIndex, e);
+                    progressListener.onFailure(new ChunkException(chunkIndex, e, mlInputs.size()));
+                }
+            });
+        }
+    }
+
+    private void predictSingleChunkWithRetry(
+        String modelId,
+        MLInput mlInput,
+        int chunkIndex,
+        int retryCount,
+        ActionListener<String> chunkListener
+    ) {
+        predictSingleChunk(modelId, mlInput, new ActionListener<String>() {
+            @Override
+            public void onResponse(String response) {
+                chunkListener.onResponse(response);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                if (retryCount < MAX_RETRY_NUMBER) {
+                    LOGGER.warn("Chunk {} failed, attempt {}/{}. Retrying...", chunkIndex, retryCount + 1, MAX_RETRY_NUMBER);
+
+                    long delay = RETRY_DELAY_MS * (long) Math.pow(2, retryCount);
+                    scheduleRetry(() -> predictSingleChunkWithRetry(modelId, mlInput, chunkIndex, retryCount + 1, chunkListener), delay);
+                } else {
+                    chunkListener.onFailure(e);
+                }
+            }
+        });
+    }
+
+    private void scheduleRetry(Runnable runnable, long delayMs) {
+        CompletableFuture.delayedExecutor(delayMs, TimeUnit.MILLISECONDS).execute(runnable);
+    }
+
+    public void predictSingleChunk(String modelId, MLInput mlInput, ActionListener<String> listener) {
         mlClient.predict(
             modelId,
             mlInput,
@@ -66,19 +141,62 @@ public class MLAccessor {
         );
     }
 
-    private MLInput getMLInput(String searchText, String reference, List<Map<String, String>> hits) {
-        Map<String, String> parameters = new HashMap<>();
+    private List<MLInput> getMLInputs(int tokenLimit, String searchText, String reference, Map<String, String> hits) {
+        List<MLInput> mlInputs = new ArrayList<>();
+        Map<String, String> currentChunk = new HashMap<>();
+
+        for (Map.Entry<String, String> entry : hits.entrySet()) {
+            Map<String, String> tempChunk = new HashMap<>(currentChunk);
+            tempChunk.put(entry.getKey(), entry.getValue());
+
+            String messages = formatMessages(searchText, reference, tempChunk);
+            int totalTokens = TokenizerUtil.countTokens(messages);
+
+            if (totalTokens > tokenLimit) {
+                if (currentChunk.isEmpty()) {
+                    // Single entry exceeds token limit
+                    LOGGER.warn("Entry with key {} causes total tokens to exceed limit of {}", entry.getKey(), tokenLimit);
+                    Map<String, String> singleEntryChunk = new HashMap<>();
+
+                    // Calculate tokens for the message with just this entry
+                    Map<String, String> testChunk = new HashMap<>();
+                    testChunk.put(entry.getKey(), entry.getValue());
+                    String testMessages = formatMessages(searchText, reference, testChunk);
+                    int excessTokens = TokenizerUtil.countTokens(testMessages) - tokenLimit;
+
+                    // Truncate the entry value
+                    int currentTokens = TokenizerUtil.countTokens(entry.getValue());
+                    String truncatedValue = TokenizerUtil.truncateString(entry.getValue(), Math.max(1, currentTokens - excessTokens));
+                    singleEntryChunk.put(entry.getKey(), truncatedValue);
+                    mlInputs.add(createMLInput(searchText, reference, singleEntryChunk));
+                } else {
+                    // Current chunk is full, add it and start new chunk
+                    mlInputs.add(createMLInput(searchText, reference, currentChunk));
+                    currentChunk = new HashMap<>();
+                    currentChunk.put(entry.getKey(), entry.getValue());
+                }
+            } else {
+                // Can add entry to current chunk
+                currentChunk.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        if (!currentChunk.isEmpty()) {
+            mlInputs.add(createMLInput(searchText, reference, currentChunk));
+        }
+
+        return mlInputs;
+    }
+
+    private String formatMessages(String searchText, String reference, Map<String, String> hits) {
         try {
-            // Use XContentBuilder to create JSON string. JSON serialization/deserialization through Jackson needs to use reflection to
-            // access class members, which is restricted by the security policy
             String hitsJson;
             try (XContentBuilder builder = XContentFactory.jsonBuilder()) {
                 builder.startArray();
-                for (Map<String, String> hit : hits) {
+                for (Map.Entry<String, String> hit : hits.entrySet()) {
                     builder.startObject();
-                    for (Map.Entry<String, String> entry : hit.entrySet()) {
-                        builder.field(entry.getKey(), entry.getValue());
-                    }
+                    builder.field("id", hit.getKey());
+                    builder.field("source", hit.getValue());
                     builder.endObject();
                 }
                 builder.endArray();
@@ -90,14 +208,17 @@ public class MLAccessor {
             } else {
                 userContent = String.format(Locale.ROOT, INPUT_FORMAT_SEARCH_WITH_REFERENCE, searchText, reference, hitsJson);
             }
-            String messages = String.format(Locale.ROOT, PROMPT_JSON_MESSAGES_SHELL, PROMPT_SEARCH_RELEVANCE, escapeJson(userContent));
-
-            parameters.put(PARAM_MESSAGES_FIELD, messages);
-            return MLInput.builder().algorithm(FunctionName.REMOTE).inputDataset(new RemoteInferenceInputDataSet(parameters)).build();
+            return String.format(Locale.ROOT, PROMPT_JSON_MESSAGES_SHELL, PROMPT_SEARCH_RELEVANCE, escapeJson(userContent));
         } catch (IOException e) {
             LOGGER.error("Error converting hits to JSON string", e);
             throw new IllegalArgumentException("Failed to process hits", e);
         }
+    }
+
+    private MLInput createMLInput(String searchText, String reference, Map<String, String> hits) {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put(PARAM_MESSAGES_FIELD, formatMessages(searchText, reference, hits));
+        return MLInput.builder().algorithm(FunctionName.REMOTE).inputDataset(new RemoteInferenceInputDataSet(parameters)).build();
     }
 
     private String extractResponseContent(MLOutput mlOutput) {
@@ -122,4 +243,5 @@ public class MLAccessor {
         String content = (String) message.get(RESPONSE_CONTENT_FIELD);
         return content;
     }
+
 }
