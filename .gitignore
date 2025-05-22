@@ -36,7 +36,7 @@ bin/
 **/.local*
 .vagrant/
 /logs/
-curl_script/RES
+src/test/scripts/RES
 
 # osx stuff
 .DS_Store
