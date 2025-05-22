@@ -9,17 +9,18 @@ echo Deleting UBI indexes
 (curl -s -X DELETE "http://localhost:9200/ubi_queries" > /dev/null) || true
 (curl -s -X DELETE "http://localhost:9200/ubi_events" > /dev/null) || true
 
-echo Creating UBI indexes
+echo Creating UBI indexes using mappings
 curl -s -X POST http://localhost:9200/_plugins/ubi/initialize
 
-echo Deleting queryset, search config and experiment indexes
+echo Loading sample UBI data
+curl  -X POST 'http://localhost:9200/index-name/_bulk?pretty' --data-binary @../data-esci/ubi_queries_events.ndjson -H "Content-Type: application/x-ndjson"
+
+
+echo Deleting queryset, search config, judgement and experiment indexes
 (curl -s -X DELETE "http://localhost:9200/.plugins-search-relevance-search-config" > /dev/null) || true
 (curl -s -X DELETE "http://localhost:9200/.plugins-search-relevance-queryset" > /dev/null) || true
+(curl -s -X DELETE "http://localhost:9200/.plugins-search-relevance-judgement" > /dev/null) || true
 (curl -s -X DELETE "http://localhost:9200/.plugins-search-relevance-experiment" > /dev/null) || true
-
-echo Loading sample UBI data
-# Make sure to create the UBI events and queries indexes first otherwise you will run into mapping errors later on.
-curl  -X POST 'http://localhost:9200/index-name/_bulk?pretty' --data-binary @../data-esci/ubi_queries_events.ndjson -H "Content-Type: application/x-ndjson"
 
 echo Create search configs
 
@@ -69,7 +70,7 @@ exe curl -s -X POST "localhost:9200/_plugins/search_relevance/query_sets" \
 -d'{
    	"name": "test03",
    	"description": "test03",
-   	"sampling": "random",
+   	"sampling": "topn",
    	"querySetSize": 20
 }'
 
