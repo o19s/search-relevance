@@ -1,8 +1,12 @@
 #!/bin/sh
 
+# This script quickly sets up a local Search Relevance Workbench from scratch with:
+# * User Behavior Insights sample data
+# * "ecommerce" sample index
+# You can now exercise all the capabilities of SRW!  It will clear out any existing data.
+
 # TODO
 #  * Implement list experiments
-#  * Implement show a specific experiment
 #  * Switch to the field values used in the runbook, we are using those from the other shell scripts. In particular use ecommerce index and use the query bodies from the runbook
 
 # Once we get remote cluster connection working, we can eliminate this.

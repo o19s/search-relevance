@@ -117,11 +117,11 @@ curl localhost:9200
 }
 ```
 
-### Run SRW with User Behavior Insights
+### Run SRW with User Behavior Insights and sample "ecommerce" dataset
 1. run command `docker compose build` to create an image that has the UBI plugin installed.
 2. run command `docker compose up` to spin up the containers.
 3. To setup up the UBI indexes run `curl -s -X POST http://localhost:9200/_plugins/ubi/initialize`.
-4. See the script `src/test/demo.sh` to see the full process of creating new UBI indexes loaded with sample data.
+4. See the script `src/test/demo.sh` to see the full process of creating new UBI indexes loaded with sample data as well as the "sample" ecommerce index.
 
 ### Run remote clusters with search-relevance
 1. update `docker-compose.yml` with your remote clusters
