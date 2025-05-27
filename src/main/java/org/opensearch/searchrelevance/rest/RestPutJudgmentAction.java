@@ -9,6 +9,7 @@ package org.opensearch.searchrelevance.rest;
 
 import static java.util.Collections.singletonList;
 import static org.opensearch.rest.RestRequest.Method.PUT;
+import static org.opensearch.searchrelevance.common.MLConstants.validateTokenLimit;
 import static org.opensearch.searchrelevance.common.MetricsConstants.MODEL_ID;
 import static org.opensearch.searchrelevance.common.PluginConstants.JUDGMENTS_URL;
 
@@ -78,7 +79,20 @@ public class RestPutJudgmentAction extends BaseRestHandler {
                 String querySetId = (String) source.get("querySetId");
                 List<String> searchConfigurationList = ParserUtils.convertObjToList(source, "searchConfigurationList");
                 int size = (Integer) source.get("size");
-                createRequest = new PutLlmJudgmentRequest(type, name, description, modelId, querySetId, searchConfigurationList, size);
+
+                int tokenLimit = validateTokenLimit(source);
+                List<String> contextFields = ParserUtils.convertObjToList(source, "contextFields");
+                createRequest = new PutLlmJudgmentRequest(
+                    type,
+                    name,
+                    description,
+                    modelId,
+                    querySetId,
+                    searchConfigurationList,
+                    size,
+                    tokenLimit,
+                    contextFields
+                );
             }
             case UBI_JUDGMENT -> {
                 String clickModel = (String) source.get("clickModel");
